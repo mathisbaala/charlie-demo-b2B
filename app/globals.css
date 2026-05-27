@@ -3177,7 +3177,16 @@ body { font-feature-settings: "ss01", "tnum" 0; }
   padding: 24px 26px 16px;
   border-bottom: 1px solid var(--line-soft);
 }
-.ptf-count { font-size: 12px; color: var(--muted); font-family: "DM Mono", monospace; }
+.ptf-count {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: "DM Mono", monospace;
+  font-weight: 500;
+  background: var(--paper-3);
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
 
 .ptf-head,
 .ptf-row,
@@ -3202,9 +3211,15 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 .ptf-row .num,
 .ptf-foot .num { text-align: right; }
 
-.ptf-row-wrap { border-bottom: 1px solid var(--line-soft); }
+.ptf-row-wrap {
+  border-bottom: 1px solid var(--line-soft);
+  border-left: 2px solid transparent;
+  transition: border-left-color 120ms;
+}
 .ptf-row-wrap:last-of-type { border-bottom: none; }
+.ptf-row-wrap:hover { border-left-color: var(--accent); }
 .ptf-row-wrap.row-warn { background: oklch(0.97 0.022 75); }
+.ptf-row-wrap.row-warn:hover { border-left-color: oklch(0.65 0.12 60); }
 
 .ptf-row {
   min-height: 62px;
@@ -3221,8 +3236,22 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 .ptf-row:hover { background: var(--paper-2); }
 .ptf-row-wrap.row-warn .ptf-row:hover { background: oklch(0.94 0.038 75); }
 
-.ptf-house { display: block; font-size: 10.5px; color: var(--muted); margin-bottom: 1px; }
+.ptf-fund-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+.ptf-house { font-size: 10.5px; color: var(--ink-2); font-weight: 500; letter-spacing: 0.01em; }
 .ptf-name  { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
+
+.ptf-chev {
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  transition: transform 180ms ease;
+}
+.ptf-chev.open { transform: rotate(-180deg); }
 
 .ptf-row .c-ok   { color: var(--ok-ink); }
 .ptf-row .c-warn { color: var(--warn-ink); }
@@ -3279,8 +3308,17 @@ body { font-feature-settings: "ss01", "tnum" 0; }
   font-weight: 600;
   color: var(--ink);
 }
-.ptf-foot .col-fund { font-size: 11.5px; font-weight: 600; }
-.ptf-foot .col-encours { font-family: "DM Mono", monospace; font-size: 13px; }
+.ptf-foot-total {
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ptf-foot-fees {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
 
 /* ═══════════════════════════════════════════════════════
    SIGNAUX

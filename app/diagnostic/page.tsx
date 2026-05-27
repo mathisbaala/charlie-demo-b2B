@@ -66,7 +66,7 @@ function PortfolioTable({ clientId }: { clientId: string }) {
   return (
     <div className="card flush ptf-section">
       <div className="ptf-section-head">
-        <h2 className="h-section">Lignes du portefeuille</h2>
+        <h2 className="h-section">Portefeuille</h2>
         <span className="ptf-count">{rows.length} positions</span>
       </div>
       <div className="ptf-table">
@@ -94,7 +94,10 @@ function PortfolioTable({ clientId }: { clientId: string }) {
                 aria-expanded={isOpen}
               >
                 <span className="col-fund">
-                  <span className="ptf-house">{r.fund.house}</span>
+                  <span className="ptf-fund-meta">
+                    <span className="ptf-house">{r.fund.house}</span>
+                    <span className={`ptf-chev ${isOpen ? "open" : ""}`}><Ico.chevD s={11} /></span>
+                  </span>
                   <span className="ptf-name">{r.fund.name}</span>
                 </span>
                 <span className="col-encours num">{r.amount.toLocaleString("fr-FR")} €</span>
@@ -134,13 +137,13 @@ function PortfolioTable({ clientId }: { clientId: string }) {
         })}
 
         <div className="ptf-foot">
-          <span className="col-fund">Total · {rows.length} positions</span>
-          <span className="col-encours num">{totalAmount.toLocaleString("fr-FR")} €</span>
-          <span className="col-pct num">100 %</span>
+          <span className="col-fund ptf-foot-total">{totalAmount.toLocaleString("fr-FR")} € · <span className="ptf-foot-fees">~{weightedFees} % frais</span></span>
+          <span className="col-encours num" />
+          <span className="col-pct num" />
           <span className="col-ytd num" />
           <span className="col-ar num" />
           <span className="col-srri num" />
-          <span className="col-frais num">~{weightedFees} %</span>
+          <span className="col-frais num" />
           <span className="col-esg" />
           <span className="col-status" />
         </div>
@@ -246,7 +249,9 @@ function TabDiagnostic({ clientId }: { clientId: string }) {
         </div>
       </div>
 
-      <PortfolioTable clientId={clientId} />
+      <div style={{ marginTop: 32 }}>
+        <PortfolioTable clientId={clientId} />
+      </div>
     </div>
   );
 }
