@@ -3213,13 +3213,13 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 
 .ptf-row-wrap {
   border-bottom: 1px solid var(--line-soft);
-  border-left: 2px solid transparent;
-  transition: border-left-color 120ms;
+  box-shadow: inset 2px 0 0 transparent;
+  transition: box-shadow 120ms;
 }
 .ptf-row-wrap:last-of-type { border-bottom: none; }
-.ptf-row-wrap:hover { border-left-color: var(--accent); }
+.ptf-row-wrap:hover { box-shadow: inset 2px 0 0 var(--accent); }
 .ptf-row-wrap.row-warn { background: oklch(0.97 0.022 75); }
-.ptf-row-wrap.row-warn:hover { border-left-color: oklch(0.65 0.12 60); }
+.ptf-row-wrap.row-warn:hover { box-shadow: inset 2px 0 0 oklch(0.65 0.12 60); }
 
 .ptf-row {
   min-height: 62px;
