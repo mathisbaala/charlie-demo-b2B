@@ -3162,6 +3162,8 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 
   /* Optimisation : alloc-compare — empiler les 2 colonnes verticalement */
   .alloc-compare { grid-template-columns: 1fr; }
+  .alloc-compare .donuts { gap: 14px; }
+  .alloc-compare .donuts svg { width: 100px; height: 100px; }
 }
 
 /* ═══════════════════════════════════════════════════════
