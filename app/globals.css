@@ -3029,4 +3029,7 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 
   /* Prompt card */
   .prompt-card textarea { min-height: 72px; }
+
+  /* Lignes avec H1 + bouton côte à côte : passer en colonne */
+  .row-between { flex-wrap: wrap; }
 }
