@@ -89,22 +89,42 @@ function TemplateCard({ tmpl, disabled, onGenerate, onPreview }: {
   );
 }
 
-function ReportPreview({ template, client, onClose }: { template: Template; client: Client; onClose: () => void }) {
-  const [chip, setChip] = useState<string | string[]>(template.chips.default);
-  const [tone, setTone] = useState("Synthétique");
-  const [cover, setCover] = useState(true);
-  const [signature, setSignature] = useState(true);
-  const [commentary, setCommentary] = useState("");
-  const [recipient, setRecipient] = useState("m.durand@email.fr");
+const THEME_OPTIONS = [
+  { id: "neutral",   label: "Neutre",   bg: "oklch(0.55 0.012 60)",    headerBg: "oklch(0.22 0.012 60)" },
+  { id: "accent",    label: "Charlie",  bg: "var(--accent)",            headerBg: "var(--accent)" },
+  { id: "gold",      label: "Or",       bg: "oklch(0.72 0.14 85)",      headerBg: "oklch(0.58 0.14 85)" },
+  { id: "green",     label: "ISR",      bg: "oklch(0.52 0.1 150)",      headerBg: "oklch(0.42 0.1 150)" },
+  { id: "aubergine", label: "Premium",  bg: "oklch(0.42 0.1 300)",      headerBg: "oklch(0.32 0.1 300)" },
+];
 
-  const toggle = (opt: string) => {
-    if (!template.chips.multi) { setChip(opt); return; }
-    setChip(prev => Array.isArray(prev)
-      ? (prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt])
-      : [opt]
+function ReportPreview({ template, client, onClose }: { template: Template; client: Client; onClose: () => void }) {
+  const [tone, setTone]           = useState("Synthétique");
+  const [themeId, setThemeId]     = useState("accent");
+  const [cover, setCover]         = useState(true);
+  const [signature, setSignature] = useState(true);
+  const [showGraphs, setShowGraphs] = useState(true);
+  const [showAnnex, setShowAnnex]   = useState(false);
+  const [commentary, setCommentary] = useState("");
+  const [recipient, setRecipient]   = useState("m.durand@email.fr");
+  const [ccList, setCcList]         = useState<string[]>([]);
+  const [dateFrom, setDateFrom]     = useState("2026-01-01");
+  const [dateTo, setDateTo]         = useState("2026-03-31");
+  const [sections, setSections]     = useState<string[]>(
+    Array.isArray(template.chips.default) ? template.chips.default : [template.chips.default]
+  );
+
+  const theme = THEME_OPTIONS.find(t => t.id === themeId) ?? THEME_OPTIONS[1];
+
+  const toggleSection = (opt: string) => {
+    if (!template.chips.multi) { setSections([opt]); return; }
+    setSections(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
+  };
+
+  const charlieRedige = () => {
+    setCommentary(
+      `Cher ${client.name}, suite à notre dernier entretien, je vous transmets ce rapport sur la période sélectionnée. Votre portefeuille affiche une performance de +5,4 % sur la période, supérieure de 1,8 point au benchmark équilibré de référence. Les principaux moteurs de performance sont la poche actions internationale et les fonds thématiques ISR.`
     );
   };
-  const isActive = (opt: string) => Array.isArray(chip) ? chip.includes(opt) : chip === opt;
 
   return (
     <div className="report-side">
@@ -112,17 +132,33 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
         <Pill variant="accent">{template.cat}</Pill>
         <button className="icon-btn" onClick={onClose}><Ico.x s={14} /></button>
       </div>
-      <h2>{template.name} · {client.name}</h2>
+      <h2 style={{ marginTop: 12, marginBottom: 18 }}>{template.name} · {client.name}</h2>
 
+      {/* Période ou sections */}
       <div className="conf-block">
         <span className="eyebrow">{template.chips.label}</span>
-        <div className="chips-row" style={{ marginTop: 8 }}>
-          {template.chips.options.map(o => (
-            <button key={o} className={`chip-filter ${isActive(o) ? "active" : ""}`} onClick={() => toggle(o)}>{o}</button>
-          ))}
-        </div>
+        {template.chips.label === "Période" ? (
+          <div className="conf-date-range">
+            <div className="date-field">
+              <label>Du</label>
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="conf-date-input" />
+            </div>
+            <span className="date-sep">→</span>
+            <div className="date-field">
+              <label>Au</label>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="conf-date-input" />
+            </div>
+          </div>
+        ) : (
+          <div className="chips-row" style={{ marginTop: 8 }}>
+            {template.chips.options.map(o => (
+              <button key={o} className={`chip-filter ${sections.includes(o) ? "active" : ""}`} onClick={() => toggleSection(o)}>{o}</button>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Ton */}
       <div className="conf-block">
         <span className="eyebrow">Ton du rapport</span>
         <div className="chips-row" style={{ marginTop: 8 }}>
@@ -132,52 +168,130 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
         </div>
       </div>
 
+      {/* Couleurs */}
+      <div className="conf-block">
+        <span className="eyebrow">Couleurs &amp; branding</span>
+        <div className="conf-swatches">
+          {THEME_OPTIONS.map(th => (
+            <button
+              key={th.id}
+              className={`conf-swatch ${themeId === th.id ? "active" : ""}`}
+              onClick={() => setThemeId(th.id)}
+              style={{ background: th.bg }}
+              title={th.label}
+              aria-label={th.label}
+            >
+              {themeId === th.id && <span className="swatch-check">✓</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Mise en page — toggle switches */}
       <div className="conf-block">
         <span className="eyebrow">Mise en page</span>
-        <div className="conf-toggle-row">
-          <label className="conf-toggle">
-            <input type="checkbox" checked={cover} onChange={e => setCover(e.target.checked)} />
-            <span>Page de garde</span>
-          </label>
-          <label className="conf-toggle">
-            <input type="checkbox" checked={signature} onChange={e => setSignature(e.target.checked)} />
-            <span>Signature CGP</span>
-          </label>
+        <div className="conf-toggles-grid">
+          {([
+            { label: "Page de garde",          value: cover,      set: setCover },
+            { label: "Signature CGP",          value: signature,  set: setSignature },
+            { label: "Graphiques",             value: showGraphs, set: setShowGraphs },
+            { label: "Annexes réglementaires", value: showAnnex,  set: setShowAnnex },
+          ] as { label: string; value: boolean; set: (v: boolean) => void }[]).map(({ label, value, set }) => (
+            <label key={label} className="conf-toggle-switch">
+              <input type="checkbox" checked={value} onChange={e => set(e.target.checked)} />
+              <span className="toggle-track">
+                <span className="toggle-thumb" />
+              </span>
+              <span className="toggle-label">{label}</span>
+            </label>
+          ))}
         </div>
       </div>
 
+      {/* Commentaire */}
       <div className="conf-block">
-        <span className="eyebrow">Commentaire d'introduction</span>
+        <div className="conf-label-row">
+          <span className="eyebrow">Commentaire d&apos;introduction</span>
+          <button className="charlie-draft-btn" onClick={charlieRedige}>✦ Charlie rédige</button>
+        </div>
         <textarea
           className="conf-textarea"
-          placeholder="Ajoutez quelques lignes de contexte ou laissez Charlie rédiger."
+          placeholder="Ajoutez quelques lignes de contexte…"
           value={commentary}
           onChange={e => setCommentary(e.target.value)}
+          rows={3}
         />
       </div>
 
+      {/* Destinataires */}
       <div className="conf-block">
-        <span className="eyebrow">Destinataire</span>
-        <input
-          className="conf-input"
-          value={recipient}
-          onChange={e => setRecipient(e.target.value)}
-          placeholder="email du client"
-        />
+        <span className="eyebrow">Destinataires</span>
+        <div className="conf-recipient-row">
+          <div className="conf-recipient-main">
+            <span className="recipient-to-label">À</span>
+            <input className="conf-input conf-input-inline" value={recipient} onChange={e => setRecipient(e.target.value)} placeholder="email@client.fr" />
+          </div>
+        </div>
+        {ccList.map((cc, i) => (
+          <div key={i} className="conf-recipient-row" style={{ marginTop: 6 }}>
+            <div className="conf-recipient-main">
+              <span className="recipient-to-label" style={{ opacity: 0.5 }}>CC</span>
+              <input
+                className="conf-input conf-input-inline"
+                value={cc}
+                onChange={e => { const next = [...ccList]; next[i] = e.target.value; setCcList(next); }}
+                placeholder="cc@exemple.fr"
+              />
+            </div>
+            <button
+              style={{ width: 28, height: 28, borderRadius: 6, border: "none", background: "transparent", color: "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              onClick={() => setCcList(ccList.filter((_, j) => j !== i))}
+            >
+              <Ico.x s={11} />
+            </button>
+          </div>
+        ))}
+        {ccList.length < 3 && (
+          <button className="rdv-add-btn" style={{ marginTop: 6 }} onClick={() => setCcList([...ccList, ""])}>
+            <Ico.plus s={11} /> Ajouter un CC
+          </button>
+        )}
       </div>
 
-      <div className="report-preview-doc">
-        <h1>{template.name}</h1>
-        <div className="caption">{client.name} · profil {client.profile} · {Array.isArray(chip) ? chip.join(" · ") : chip}</div>
-        <div className="doc-stats">
-          <div className="item"><div className="lbl">Encours</div><div className="v">240 k€</div></div>
-          <div className="item"><div className="lbl">1 an</div><div className="v">+5,4 %</div></div>
-          <div className="item"><div className="lbl">Score</div><div className="v">72/100</div></div>
+      {/* Aperçu document */}
+      <div className="report-preview-doc" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="preview-doc-header" style={{ background: theme.headerBg }}>
+          <div className="preview-doc-brand">charlie</div>
+          <div className="preview-doc-title-block">
+            <div className="preview-doc-title">{template.name}</div>
+            <div className="preview-doc-sub">{client.name} · profil {client.profile}</div>
+          </div>
         </div>
-        {commentary.trim() && <p style={{ fontStyle: "italic", color: "var(--ink)" }}>{commentary}</p>}
-        <p>Le portefeuille progresse de 5,4 % sur la période, soit 1,8 point au-dessus du benchmark équilibré. La poche actions porte la performance, notamment la signature Edmond de Rothschild Patrimoine 60/40 et Pictet Global Environment.</p>
-        <p>Recommandation principale, alléger Carmignac Patrimoine retiré de la liste prescrite, réinvestir le cash excédentaire de 25 k€ sur l'obligataire court terme.</p>
-        <div className="pagenum">1 / 6 · ton {tone.toLowerCase()}</div>
+        <div style={{ padding: "16px 20px" }}>
+          <div className="doc-stats">
+            <div className="item"><div className="lbl">Encours</div><div className="v">240 k€</div></div>
+            <div className="item">
+              <div className="lbl">Période</div>
+              <div className="v" style={{ fontSize: 12 }}>
+                {dateFrom.split("-").reverse().join("/")} → {dateTo.split("-").reverse().join("/")}
+              </div>
+            </div>
+            <div className="item"><div className="lbl">Score</div><div className="v">72/100</div></div>
+          </div>
+          {commentary.trim() && (
+            <p style={{ fontStyle: "italic", color: "var(--ink-2)", fontSize: "12px", lineHeight: 1.6, margin: "12px 0 0" }}>{commentary}</p>
+          )}
+          {sections.map(s => (
+            <div key={s} className="preview-section-block">
+              <div className="preview-section-name" style={{ color: theme.headerBg }}>{s}</div>
+              <div className="preview-section-lines">
+                <div className="preview-line" />
+                <div className="preview-line short" />
+              </div>
+            </div>
+          ))}
+          <div className="pagenum">1 / {2 + sections.length} · {tone.toLowerCase()}</div>
+        </div>
       </div>
 
       <div className="report-side-foot">
