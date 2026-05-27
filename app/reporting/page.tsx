@@ -1,0 +1,276 @@
+"use client";
+import { useState } from "react";
+import { TEMPLATES, SENT_REPORTS, type Template } from "@/lib/data/templates";
+import { CLIENTS, type Client } from "@/lib/data/clients";
+import { Ico } from "@/components/kit/icons";
+import { Btn, Pill } from "@/components/kit/primitives";
+import Sparkline from "@/components/kit/sparkline";
+import Donut from "@/components/kit/donut";
+import { ClientPickerBtn } from "@/components/shell/chat-popup";
+import { ClientBanner } from "./client-banner";
+
+function TemplateCard({ tmpl, disabled, onGenerate, onPreview }: {
+  tmpl: Template;
+  disabled?: boolean;
+  onGenerate?: () => void;
+  onPreview?: () => void;
+}) {
+  return (
+    <div className={`tmpl-card ${disabled ? "disabled" : ""}`}>
+      <div className="preview">
+        {tmpl.preview === "perf" && <>
+          <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+            <div style={{ background: "var(--accent-soft)", color: "var(--accent-ink)", padding: "4px 6px", borderRadius: 4, fontSize: 9, fontFamily: "DM Mono, monospace" }}>+5,2 % YTD</div>
+            <div style={{ background: "var(--accent-soft)", color: "var(--accent-ink)", padding: "4px 6px", borderRadius: 4, fontSize: 9, fontFamily: "DM Mono, monospace" }}>+1,8 % vs bench</div>
+          </div>
+          <Sparkline data={[100,101,103,102,104,106,105,108,110]} w={200} h={26} strokeWidth={1.3} />
+        </>}
+        {tmpl.preview === "bilan" && <>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Donut size={48} thickness={9} segments={[{value:48,color:"var(--accent)"},{value:30,color:"oklch(0.45 0.06 60)"},{value:22,color:"oklch(0.7 0.03 80)"}]} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+              <div className="line" style={{ width: "80%" }} />
+              <div className="line short" />
+              <div className="line" style={{ width: "70%" }} />
+            </div>
+          </div>
+        </>}
+        {tmpl.preview === "regle" && <>
+          {["Profil de risque", "Objectifs", "Adéquation", "Capacité à subir des pertes"].map((s, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, background: i === 2 ? "var(--warn)" : "var(--ok)", borderRadius: 999 }} />
+              <span style={{ fontSize: 10, color: "var(--ink-2)" }}>{s}</span>
+            </div>
+          ))}
+        </>}
+        {tmpl.preview === "brief" && <>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+            {["240 k€", "+5,4 %", "2"].map((v, i) => (
+              <div key={i} style={{ background: "var(--paper)", padding: "4px 6px", borderRadius: 4 }}>
+                <div style={{ fontSize: 8, color: "var(--muted)" }}>{["Encours","1 an","Alertes"][i]}</div>
+                <div style={{ fontFamily: "Instrument Serif, serif", fontSize: 14, color: i === 2 ? "var(--warn-ink)" : "var(--accent-ink)" }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </>}
+        {tmpl.preview === "fiscale" && <>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            <div style={{ background: "var(--paper)", padding: "4px 6px", borderRadius: 4 }}>
+              <div style={{ fontSize: 8, color: "var(--muted)" }}>PER</div>
+              <div style={{ fontFamily: "Instrument Serif, serif", fontSize: 14, color: "var(--accent-ink)" }}>12,4 k€</div>
+            </div>
+            <div style={{ background: "var(--paper)", padding: "4px 6px", borderRadius: 4 }}>
+              <div style={{ fontSize: 8, color: "var(--muted)" }}>FCPI</div>
+              <div style={{ fontFamily: "Instrument Serif, serif", fontSize: 14, color: "var(--accent-ink)" }}>3,1 k€</div>
+            </div>
+          </div>
+        </>}
+        {tmpl.preview === "esg" && <>
+          {[{l:"Climat",v:80},{l:"Social",v:60},{l:"Gouvernance",v:72}].map((b, i) => (
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "60px 1fr 22px", alignItems: "center", gap: 4 }}>
+              <span style={{ fontSize: 9.5, color: "var(--ink-2)" }}>{b.l}</span>
+              <div style={{ height: 4, background: "var(--paper)", borderRadius: 999, overflow: "hidden" }}>
+                <i style={{ display: "block", height: "100%", width: `${b.v}%`, background: "var(--accent)" }} />
+              </div>
+              <span style={{ fontSize: 9, fontFamily: "DM Mono, monospace", textAlign: "right", color: "var(--ink-2)" }}>{b.v}%</span>
+            </div>
+          ))}
+        </>}
+      </div>
+      <div className="body">
+        <span className="eb" style={{ fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--muted)" }}>{tmpl.cat}</span>
+        <div className="name">{tmpl.name}</div>
+        <div className="ctas">
+          <Btn variant="accent" size="sm" onClick={onGenerate} disabled={disabled}>Générer</Btn>
+          <Btn variant="ghost" size="sm" onClick={onPreview} disabled={disabled}>Aperçu</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportPreview({ template, client, onClose }: { template: Template; client: Client; onClose: () => void }) {
+  const [chip, setChip] = useState<string | string[]>(template.chips.default);
+  const [tone, setTone] = useState("Synthétique");
+  const [cover, setCover] = useState(true);
+  const [signature, setSignature] = useState(true);
+  const [commentary, setCommentary] = useState("");
+  const [recipient, setRecipient] = useState("m.durand@email.fr");
+
+  const toggle = (opt: string) => {
+    if (!template.chips.multi) { setChip(opt); return; }
+    setChip(prev => Array.isArray(prev)
+      ? (prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt])
+      : [opt]
+    );
+  };
+  const isActive = (opt: string) => Array.isArray(chip) ? chip.includes(opt) : chip === opt;
+
+  return (
+    <div className="report-side">
+      <div className="row-between">
+        <Pill variant="accent">{template.cat}</Pill>
+        <button className="icon-btn" onClick={onClose}><Ico.x s={14} /></button>
+      </div>
+      <h2>{template.name} · {client.name}</h2>
+
+      <div className="conf-block">
+        <span className="eyebrow">{template.chips.label}</span>
+        <div className="chips-row" style={{ marginTop: 8 }}>
+          {template.chips.options.map(o => (
+            <button key={o} className={`chip-filter ${isActive(o) ? "active" : ""}`} onClick={() => toggle(o)}>{o}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="conf-block">
+        <span className="eyebrow">Ton du rapport</span>
+        <div className="chips-row" style={{ marginTop: 8 }}>
+          {["Synthétique", "Détaillé", "Pédagogique"].map(t => (
+            <button key={t} className={`chip-filter ${tone === t ? "active" : ""}`} onClick={() => setTone(t)}>{t}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="conf-block">
+        <span className="eyebrow">Mise en page</span>
+        <div className="conf-toggle-row">
+          <label className="conf-toggle">
+            <input type="checkbox" checked={cover} onChange={e => setCover(e.target.checked)} />
+            <span>Page de garde</span>
+          </label>
+          <label className="conf-toggle">
+            <input type="checkbox" checked={signature} onChange={e => setSignature(e.target.checked)} />
+            <span>Signature CGP</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="conf-block">
+        <span className="eyebrow">Commentaire d'introduction</span>
+        <textarea
+          className="conf-textarea"
+          placeholder="Ajoutez quelques lignes de contexte ou laissez Charlie rédiger."
+          value={commentary}
+          onChange={e => setCommentary(e.target.value)}
+        />
+      </div>
+
+      <div className="conf-block">
+        <span className="eyebrow">Destinataire</span>
+        <input
+          className="conf-input"
+          value={recipient}
+          onChange={e => setRecipient(e.target.value)}
+          placeholder="email du client"
+        />
+      </div>
+
+      <div className="report-preview-doc">
+        <h1>{template.name}</h1>
+        <div className="caption">{client.name} · profil {client.profile} · {Array.isArray(chip) ? chip.join(" · ") : chip}</div>
+        <div className="doc-stats">
+          <div className="item"><div className="lbl">Encours</div><div className="v">240 k€</div></div>
+          <div className="item"><div className="lbl">1 an</div><div className="v">+5,4 %</div></div>
+          <div className="item"><div className="lbl">Score</div><div className="v">72/100</div></div>
+        </div>
+        {commentary.trim() && <p style={{ fontStyle: "italic", color: "var(--ink)" }}>{commentary}</p>}
+        <p>Le portefeuille progresse de 5,4 % sur la période, soit 1,8 point au-dessus du benchmark équilibré. La poche actions porte la performance, notamment la signature Edmond de Rothschild Patrimoine 60/40 et Pictet Global Environment.</p>
+        <p>Recommandation principale, alléger Carmignac Patrimoine retiré de la liste prescrite, réinvestir le cash excédentaire de 25 k€ sur l'obligataire court terme.</p>
+        <div className="pagenum">1 / 6 · ton {tone.toLowerCase()}</div>
+      </div>
+
+      <div className="report-side-foot">
+        <Btn variant="accent" size="sm" icon={<Ico.refresh s={13} />}>Régénérer</Btn>
+        <Btn variant="ghost" size="sm" icon={<Ico.edit s={13} />}>Éditer</Btn>
+        <Btn variant="ghost" size="sm" icon={<Ico.download s={13} />}>PDF</Btn>
+        <div style={{ flex: 1 }} />
+        <Btn variant="primary" size="sm" icon={<Ico.send s={13} />}>Envoyer</Btn>
+      </div>
+    </div>
+  );
+}
+
+export default function ReportingPage() {
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [filter, setFilter] = useState("all");
+  const [previewTmpl, setPreviewTmpl] = useState<Template | null>(null);
+  const client = clientId ? CLIENTS.find(c => c.id === clientId) ?? null : null;
+
+  const list = filter === "all" ? TEMPLATES
+    : filter === "mine" ? TEMPLATES.slice(0, 2)
+    : TEMPLATES.filter(t => t.catKey === filter);
+
+  if (!client) {
+    return (
+      <div className="page-b2b" data-screen-label="05 Reporting">
+        <div className="row-between">
+          <h1 className="h-hero">Préparez le bon <span className="it">rapport</span>.</h1>
+          <Btn variant="accent" icon={<Ico.user s={13} />} onClick={() => setClientId("durand")}>Choisir un client</Btn>
+        </div>
+        <div className="report-empty">
+          <div className="ico"><Ico.user s={26} /></div>
+          <div className="ttl">Aucun client chargé.</div>
+        </div>
+        <h2 className="h-section" style={{ marginTop: 28 }}>Modèles de rapport</h2>
+        <div className="tmpl-grid">
+          {TEMPLATES.map(t => <TemplateCard key={t.id} tmpl={t} disabled />)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-b2b" data-screen-label="05 Reporting">
+      <div className="row-between">
+        <h1 className="h-hero">Un rapport <span className="it">pour {client.name}</span>.</h1>
+        <ClientPickerBtn client={client} onChange={c => setClientId(c.id)} />
+      </div>
+
+      <ClientBanner client={client} />
+
+      <div className="row-between" style={{ margin: "24px 0 6px" }}>
+        <h2 className="h-section">Modèles de rapport</h2>
+        <div className="chips-row">
+          <button className={`chip-filter ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>Tous</button>
+          <button className={`chip-filter ${filter === "Investissement" ? "active" : ""}`} onClick={() => setFilter("Investissement")}>Investissement</button>
+          <button className={`chip-filter ${filter === "Réglementaire" ? "active" : ""}`} onClick={() => setFilter("Réglementaire")}>Réglementaire</button>
+          <button className={`chip-filter ${filter === "mine" ? "active" : ""}`} onClick={() => setFilter("mine")}>Mes modèles</button>
+        </div>
+      </div>
+      <div className={previewTmpl ? "report-layout" : ""}>
+        <div className="tmpl-grid" style={previewTmpl ? { margin: 0 } : {}}>
+          {list.map(t => (
+            <TemplateCard
+              key={t.id} tmpl={t}
+              onGenerate={() => setPreviewTmpl(t)}
+              onPreview={() => setPreviewTmpl(t)}
+            />
+          ))}
+        </div>
+        {previewTmpl && <ReportPreview template={previewTmpl} client={client} onClose={() => setPreviewTmpl(null)} />}
+      </div>
+
+      <h2 className="h-section" style={{ marginTop: 32 }}>Rapports envoyés</h2>
+      <div className="doc-table-card" style={{ marginTop: 12 }}>
+        {SENT_REPORTS.map((r, i) => (
+          <div key={i} className="sent-row">
+            <div>
+              <div className="date">{r.date}</div>
+              <div className="by">par {r.by}</div>
+            </div>
+            <div>
+              <Pill variant="outline">{r.cat}</Pill>
+              <div className="name" style={{ marginTop: 6 }}>{r.name}</div>
+            </div>
+            <Pill variant={r.statusV}>{r.status}</Pill>
+            <div className="actions">
+              <Btn variant="ghost" size="sm">Ouvrir</Btn>
+              <Btn variant="ghost" size="sm">Renvoyer</Btn>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
