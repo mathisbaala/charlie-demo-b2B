@@ -3057,6 +3057,14 @@ body { font-feature-settings: "ss01", "tnum" 0; }
   .contact-quick-actions { gap: 8px; }
   .contact-action-btn { padding: 10px 8px; gap: 6px; font-size: 12px; }
   .contact-action-btn .action-ico { width: 24px; height: 24px; }
+
+  /* Reporting : empiler les 2 colonnes verticalement */
+  /* minmax(0,1fr) force la cellule à ne pas se dimensionner sur le contenu */
+  .report-layout { grid-template-columns: minmax(0, 1fr); }
+  .report-side { position: relative; top: 0; max-height: none; }
+
+  /* Chips de ton : affichage flex pour que le wrap fonctionne */
+  .chips-row { display: flex; }
 }
 
 /* ═══════════════════════════════════════════════════════
