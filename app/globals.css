@@ -3156,6 +3156,12 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 
   /* Chips de ton : affichage flex pour que le wrap fonctionne */
   .chips-row { display: flex; }
+
+  /* Optimisation : CTAs — touch target minimum 44 px */
+  .opt-global-actions .btn { min-height: 44px; }
+
+  /* Optimisation : alloc-compare — empiler les 2 colonnes verticalement */
+  .alloc-compare { grid-template-columns: 1fr; }
 }
 
 /* ═══════════════════════════════════════════════════════
