@@ -3038,4 +3038,18 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 
   /* Lignes avec H1 + bouton côte à côte : passer en colonne */
   .row-between { flex-wrap: wrap; }
+
+  /* Card client diagnostic : avatar+info sur la première ligne, scores dessous */
+  .client-banner {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+  .client-banner .scores {
+    grid-column: 1 / -1;
+    border-left: none;
+    border-top: 1px solid var(--line-soft);
+    padding-left: 0;
+    padding-top: 16px;
+    justify-content: flex-start;
+  }
 }
