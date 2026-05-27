@@ -75,7 +75,7 @@ button { font-family: inherit; }
 
 .shell {
   display: grid;
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 56px minmax(0, 1fr);
   min-height: 0;
 }
 
@@ -1391,7 +1391,7 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 
 /* ---------- App shell tweaks ---------- */
 .app-b2b { grid-template-rows: 56px 1fr; }
-.shell-b2b { grid-template-columns: 60px 1fr; }
+.shell-b2b { grid-template-columns: 60px minmax(0, 1fr); }
 .rail .rail-btn { position: relative; }
 .rail .rail-btn .badge-dot {
   position: absolute;
