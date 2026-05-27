@@ -215,7 +215,7 @@ export default function RecherchePage() {
             <a className="more" onClick={() => setView("catalog")} style={{ cursor: "pointer" }}>Voir tout →</a>
           </div>
           <div className="fund-scroller">
-            {FUNDS_CHARLIE.map(f => <FundCard key={f.id} fund={f} onClick={() => setActiveFund(f.id)} />)}
+            {FUNDS_CHARLIE.map(f => <FundCard key={f.id} fund={f} onClick={() => { setActiveFund(f.id); setView("catalog"); }} />)}
           </div>
 
           <div className="fund-section-head">
@@ -223,7 +223,7 @@ export default function RecherchePage() {
             <a className="more" onClick={() => setView("catalog")} style={{ cursor: "pointer" }}>Voir tout →</a>
           </div>
           <div className="fund-scroller">
-            {FUNDS_RECO.map(f => <FundCard key={f.id} fund={f} onClick={() => setActiveFund(f.id)} />)}
+            {FUNDS_RECO.map(f => <FundCard key={f.id} fund={f} onClick={() => { setActiveFund(f.id); setView("catalog"); }} />)}
           </div>
         </div>
       )}
