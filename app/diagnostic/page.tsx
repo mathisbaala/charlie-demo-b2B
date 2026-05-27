@@ -1,6 +1,6 @@
 "use client";
 import { Suspense } from "react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { CLIENTS, type Client } from "@/lib/data/clients";
 import { Ico } from "@/components/kit/icons";
@@ -10,7 +10,6 @@ import Donut from "@/components/kit/donut";
 import { ClientPickerBtn } from "@/components/shell/chat-popup";
 import { getPortfolioRows, getFundStatus, parseFeesPct } from "@/lib/data/portfolio";
 import { CLIENT_SIGNALS, type Signal } from "@/lib/data/signals";
-import { ALERTES } from "@/lib/data/alerts";
 import { CLIENT_CONTACTS, CLIENT_NEXT_MEETING, type ContactType } from "@/lib/data/contacts";
 
 const ALLOC_COLORS: Record<string, string> = {
@@ -255,42 +254,57 @@ function TabDiagnostic({ clientId }: { clientId: string }) {
 /* ─────────────────────────────────────────────────────────
    Tab Optimisation
 ───────────────────────────────────────────────────────── */
-function TabOptimisation() {
+function TabOptimisation({ clientId }: { clientId: string }) {
+  void clientId;
   const compare = [
-    { name: "Actions",          color: ALLOC_COLORS.Actions,          cur: 48, cible: 42, delta: "−6" },
-    { name: "Obligations",      color: ALLOC_COLORS.Obligations,      cur: 30, cible: 34, delta: "+4" },
-    { name: "Immobilier",       color: ALLOC_COLORS.Immobilier,       cur: 15, cible: 17, delta: "+2" },
-    { name: "Cash & monétaire", color: ALLOC_COLORS["Cash & monétaire"], cur: 7, cible: 7, delta: "0" },
+    { name: "Actions",          color: ALLOC_COLORS.Actions,              cur: 48, cible: 42, delta: -6 },
+    { name: "Obligations",      color: ALLOC_COLORS.Obligations,          cur: 30, cible: 34, delta: +4 },
+    { name: "Immobilier",       color: ALLOC_COLORS.Immobilier,           cur: 15, cible: 17, delta: +2 },
+    { name: "Cash & monétaire", color: ALLOC_COLORS["Cash & monétaire"],  cur: 7,  cible: 7,  delta: 0  },
   ];
 
   return (
-    <div>
-      <div className="opt-banner">
-        <div>
-          <span className="eb">Gain attendu en suivant le plan</span>
-          <div className="head">+1,8 % d&apos;efficience par an</div>
-          <div className="sub">
-            Rééquilibrage de la poche actions vers les zones émergentes et ISR thématique, allègement de Carmignac Patrimoine, allocation des 25 k€ de cash excédentaire vers l&apos;obligataire court terme.
+    <div className="opt-root">
+      {/* Score actuel → potentiel */}
+      <div className="opt-score-card">
+        <div className="opt-score-eyebrow">Score de pilotage du portefeuille</div>
+        <div className="opt-score-row">
+          <div className="opt-score-item">
+            <div className="opt-score-label">Score actuel</div>
+            <div className="opt-score-num opt-accent">72<span className="opt-score-denom">/100</span></div>
+            <div className="opt-score-track">
+              <div className="opt-score-fill" style={{ width: "72%", background: "var(--accent)" }} />
+            </div>
+          </div>
+          <div className="opt-score-arrow">→</div>
+          <div className="opt-score-item">
+            <div className="opt-score-label">Score potentiel</div>
+            <div className="opt-score-num opt-ok">86<span className="opt-score-denom">/100</span></div>
+            <div className="opt-score-track">
+              <div className="opt-score-fill opt-score-fill-ghost" style={{ width: "86%" }} />
+            </div>
           </div>
         </div>
-        <div className="actions">
-          <Btn variant="accent">Simuler le plan</Btn>
-          <Btn variant="primary" icon={<Ico.send s={13} />}>Lettre de mandat</Btn>
-          <Btn variant="ghost" icon={<Ico.history s={13} />}>Plan de versement</Btn>
+        <div className="opt-axes">
+          <span className="opt-axes-label">Leviers :</span>
+          {["Rééquilibrage allocation", "Arbitrage frais", "Exposition ISR", "Diversification géo."].map(ax => (
+            <span key={ax} className="opt-axis-chip">{ax}</span>
+          ))}
         </div>
       </div>
 
+      {/* Allocation actuelle vs cible */}
       <div className="alloc-compare">
         <div>
           <div className="donuts">
             <div>
-              <Donut size={150} thickness={22} segments={compare.map(c => ({ value: c.cur, color: c.color }))} />
+              <Donut size={140} thickness={20} segments={compare.map(c => ({ value: c.cur, color: c.color }))} />
               <div className="donut-label">Actuel</div>
             </div>
             <span className="donut-arrow">→</span>
             <div>
-              <Donut size={150} thickness={22} segments={compare.map(c => ({ value: c.cible, color: c.color }))} />
-              <div className="donut-label" style={{ color: "var(--accent-ink)" }}>Cible</div>
+              <Donut size={140} thickness={20} segments={compare.map(c => ({ value: c.cible, color: c.color }))} />
+              <div className="donut-label" style={{ color: "var(--accent-ink)" }}>Cible mandat</div>
             </div>
           </div>
         </div>
@@ -302,30 +316,92 @@ function TabOptimisation() {
               <span className="cur">{c.cur} %</span>
               <span className="arr">→</span>
               <span className="cible">{c.cible} %</span>
-              <span className="delta">Δ {c.delta}</span>
+              <span className={`delta ${c.delta < 0 ? "delta-neg" : c.delta > 0 ? "delta-pos" : "delta-neu"}`}>
+                {c.delta > 0 ? "+" : ""}{c.delta !== 0 ? c.delta + " %" : "—"}
+              </span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="plan-card">
-        <h2 className="h-section">Plan d&apos;arbitrage</h2>
-        <div style={{ marginTop: 8 }}>
-          {[
-            { n: "01", action: "Vendre 24 000 € · DNCA Europe Growth",          why: "Réduit la surexposition zone Euro de 6 points sans déclencher de fiscalité (PEA bénéficie de l'antériorité de 8 ans).",     impact: "−0,4 % de risque · neutre fiscalement" },
-            { n: "02", action: "Acheter 14 000 € · Pictet Global Environment",  why: "Renforce la poche actions thématique environnement, cohérente avec l'objectif ISR du client.",                                  impact: "+0,8 % d'efficience · empreinte ISR +4 pts" },
-            { n: "03", action: "Allouer 10 000 € · Charlie Obligataire Crédit Euro", why: "Replace l'excédent de cash de 25 k€ vers une poche obligataire courte, rendement net 3,8 %.",                             impact: "+0,6 % de rendement · risque inchangé" },
-          ].map(p => (
-            <div key={p.n} className="plan-row">
-              <span className="n">{p.n}</span>
-              <div>
-                <div className="action">{p.action}</div>
-                <div className="why">{p.why}</div>
-              </div>
-              <Pill variant="accent">{p.impact}</Pill>
-            </div>
-          ))}
+      {/* Recommandations prioritaires */}
+      <div className="opt-recos">
+        <h2 className="h-section" style={{ marginBottom: 12 }}>Recommandations prioritaires</h2>
+
+        <div className="opt-reco-card">
+          <div className="opt-reco-head">
+            <span className="opt-priority opt-priority-urgent">Urgent</span>
+            <span className="opt-reco-title">Arbitrage Carmignac Patrimoine</span>
+          </div>
+          <p className="opt-reco-desc">
+            Carmignac Patrimoine affiche 1,85 % de frais courants pour une performance 3 ans de +4,2 %. Amundi IS MSCI Europe ESG Leaders offre une exposition Zone Euro comparable à 0,12 % de frais, classé Article 8 SFDR — soit une économie nette de 1,73 %/an sans modification du profil de risque.
+          </p>
+          <div className="opt-fund-move-row">
+            <span className="opt-move-tag opt-sell">Vendre</span>
+            <span className="opt-fund-name">Carmignac Patrimoine A · 24 000 €</span>
+          </div>
+          <div className="opt-fund-move-row">
+            <span className="opt-move-tag opt-buy">Acheter</span>
+            <span className="opt-fund-name">Amundi IS MSCI Europe ESG Leaders · 24 000 €</span>
+          </div>
+          <div className="opt-impact-chips">
+            <span className="opt-impact-chip">Frais −1,73 %/an</span>
+            <span className="opt-impact-chip">SRRI 5 · inchangé</span>
+            <span className="opt-impact-chip">Article 8 SFDR</span>
+            <span className="opt-impact-chip opt-chip-accent">+0,9 % efficience</span>
+          </div>
         </div>
+
+        <div className="opt-reco-card">
+          <div className="opt-reco-head">
+            <span className="opt-priority opt-priority-optimal">Optimal</span>
+            <span className="opt-reco-title">Réallouer l&apos;excédent monétaire</span>
+          </div>
+          <p className="opt-reco-desc">
+            18 000 € en fonds euros génèrent 2,1 % net. Un transfert vers Charlie Obligataire Crédit Euro (rendement estimé 4,3 % net, duration 2 ans) améliore le rendement sans alourdir le risque global. L&apos;opération est fiscalement neutre dans le cadre de l&apos;assurance-vie.
+          </p>
+          <div className="opt-fund-move-row">
+            <span className="opt-move-tag opt-sell">Arbitrer</span>
+            <span className="opt-fund-name">Fonds euros Generali · 18 000 €</span>
+          </div>
+          <div className="opt-fund-move-row">
+            <span className="opt-move-tag opt-buy">Investir</span>
+            <span className="opt-fund-name">Charlie Obligataire Crédit Euro · 18 000 €</span>
+          </div>
+          <div className="opt-impact-chips">
+            <span className="opt-impact-chip">Rendement +2,2 %/an</span>
+            <span className="opt-impact-chip">Duration 2 ans</span>
+            <span className="opt-impact-chip">Neutralité fiscale AV</span>
+            <span className="opt-impact-chip opt-chip-accent">+0,6 % sur portefeuille</span>
+          </div>
+        </div>
+
+        <div className="opt-reco-card">
+          <div className="opt-reco-head">
+            <span className="opt-priority opt-priority-terme">À terme</span>
+            <span className="opt-reco-title">Diversification géographique</span>
+          </div>
+          <p className="opt-reco-desc">
+            Sous-exposition marchés émergents de −8 pts vs mandat de référence : allocation actuelle 4 %, cible 12 %. À renforcer progressivement sur 6–12 mois via les prochains versements, en évitant tout réalignement brutal du risque. Horizon recommandé : 36 mois minimum.
+          </p>
+          <div className="opt-fund-move-row">
+            <span className="opt-move-tag opt-buy">Ajouter</span>
+            <span className="opt-fund-name">Carmignac Emergents · versements progressifs</span>
+          </div>
+          <div className="opt-impact-chips">
+            <span className="opt-impact-chip">Exposition EM +8 pts</span>
+            <span className="opt-impact-chip">SRRI 6 · haut risque</span>
+            <span className="opt-impact-chip">Horizon 36 mois</span>
+            <span className="opt-impact-chip opt-chip-accent">+0,3 % diversification</span>
+          </div>
+        </div>
+      </div>
+
+      {/* CTAs globaux */}
+      <div className="opt-global-actions">
+        <Btn variant="accent" icon={<Ico.zap s={13} />}>Simuler le plan</Btn>
+        <Btn variant="primary" icon={<Ico.send s={13} />}>Lettre de mandat</Btn>
+        <Btn variant="ghost" icon={<Ico.history s={13} />}>Plan de versement</Btn>
       </div>
     </div>
   );
@@ -348,42 +424,10 @@ const INITIALS_TO_ID: Record<string, string> = {
 
 function TabSignaux({ clientId }: { clientId: string }) {
   const personalSignals = CLIENT_SIGNALS[clientId] ?? [];
-  const linkedAlerts = ALERTES.filter(a =>
-    a.clients.some(c => INITIALS_TO_ID[c.initials] === clientId)
-  );
   const critCount = personalSignals.filter(s => s.severity === "critical" || s.severity === "warn").length;
 
   return (
     <div>
-      {linkedAlerts.length > 0 && (
-        <div className="signals-block">
-          <div className="signals-block-head">
-            <span className="eb">Alertes cabinet · ce client</span>
-            <Pill variant="warn">{linkedAlerts.length}</Pill>
-          </div>
-          {linkedAlerts.map(a => (
-            <div key={a.id} className="sig-item sig-linked">
-              <div className={`sig-sev-bar swatch-${a.swatch}`} />
-              <div className="sig-body">
-                <div className="sig-meta-line">
-                  <Pill variant={a.catVariant}>{a.cat}</Pill>
-                  <span className="sig-when">{a.when}</span>
-                </div>
-                <div className="sig-title">{a.title}</div>
-                <div className="sig-desc">{a.sub}</div>
-                {a.actions.length > 0 && (
-                  <div className="sig-actions">
-                    {a.actions.slice(0, 2).map(ac => (
-                      <Btn key={ac.label} variant={ac.variant} size="sm">{ac.label}</Btn>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div className="signals-block">
         <div className="signals-block-head">
           <span className="eb">Signaux personnels</span>
@@ -436,6 +480,14 @@ function TabContact({ clientId }: { clientId: string }) {
   const [emailBody,    setEmailBody]    = useState("");
   const [msgBody,      setMsgBody]      = useState("");
   const [points, setPoints]             = useState<string[]>(CLIENT_NEXT_MEETING[clientId]?.points ?? []);
+  const pointsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    pointsRef.current?.querySelectorAll<HTMLTextAreaElement>("textarea.rdv-point-input").forEach(t => {
+      t.style.height = "auto";
+      t.style.height = t.scrollHeight + "px";
+    });
+  }, [points]);
   const [toastVisible, setToastVisible] = useState(false);
 
   const entries  = CLIENT_CONTACTS[clientId]     ?? [];
@@ -530,18 +582,24 @@ function TabContact({ clientId }: { clientId: string }) {
                 <div className="next-rdv-when">{next.date} · {next.time}</div>
               </div>
             </div>
-            <div className="next-rdv-points">
+            <div className="next-rdv-points" ref={pointsRef}>
               <span className="lbl-sm">Points à préparer</span>
               {points.map((pt, i) => (
                 <div key={i} className="rdv-point-row">
                   <span className="rdv-dot" />
-                  <input
+                  <textarea
                     className="rdv-point-input"
                     value={pt}
+                    rows={1}
                     onChange={e => {
                       const next = [...points];
                       next[i] = e.target.value;
                       setPoints(next);
+                    }}
+                    onInput={e => {
+                      const t = e.currentTarget;
+                      t.style.height = "auto";
+                      t.style.height = t.scrollHeight + "px";
                     }}
                   />
                   <button
@@ -704,7 +762,7 @@ function DiagnosticPage() {
       </div>
 
       {tab === "diagnostic"  && <TabDiagnostic clientId={clientId} />}
-      {tab === "optimisation" && <TabOptimisation />}
+      {tab === "optimisation" && <TabOptimisation clientId={clientId} />}
       {tab === "signaux"     && <TabSignaux clientId={clientId} />}
       {tab === "documents"   && <TabDocuments />}
       {tab === "contact"     && <TabContact clientId={clientId} />}
