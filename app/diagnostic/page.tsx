@@ -105,7 +105,7 @@ function PortfolioTable({ clientId }: { clientId: string }) {
                 <span className="col-srri num">{r.fund.srri}/7</span>
                 <span className="col-frais num">{r.fund.frais}</span>
                 <span className="col-esg">
-                  <span className={`esg-badge ${r.fund.classification === "Article 9" ? "art9" : "art8"}`}>
+                  <span className={`esg-badge ${r.fund.classification === "Article 9" ? "art9" : r.fund.classification === "Article 8" ? "art8" : "art6"}`}>
                     {r.fund.classification}
                   </span>
                 </span>

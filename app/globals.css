@@ -3127,6 +3127,7 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 }
 .esg-badge.art9 { background: var(--ok-soft); color: var(--ok-ink); }
 .esg-badge.art8 { background: var(--accent-soft); color: var(--accent-ink); }
+.esg-badge.art6 { background: var(--paper-3); color: var(--muted); }
 
 .ptf-status {
   display: inline-block;
