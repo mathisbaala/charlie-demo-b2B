@@ -133,7 +133,7 @@ button { font-family: inherit; }
 .topbar .actions { display: flex; align-items: center; gap: 8px; }
 
 .icon-btn {
-  width: 34px; height: 34px;
+  width: 40px; height: 40px;
   border-radius: 999px;
   border: 1px solid var(--line-soft);
   background: var(--paper);
@@ -147,7 +147,7 @@ button { font-family: inherit; }
 .icon-btn:hover { background: var(--paper-2); }
 
 .user-avatar {
-  width: 34px; height: 34px;
+  width: 40px; height: 40px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-ink);
@@ -2994,4 +2994,36 @@ body { font-feature-settings: "ss01", "tnum" 0; }
   background: var(--ink);
   color: var(--paper);
   border-color: var(--ink);
+}
+
+/* =========================================================
+   RESPONSIVE — correctifs mobiles
+   ========================================================= */
+@media (max-width: 700px) {
+  /* Layout de base */
+  .page-b2b        { padding: 20px 16px 60px; }
+  .page-narrow-1100,
+  .page-narrow-980 { padding: 20px 16px 60px; }
+
+  /* Titres hero */
+  .h-hero { font-size: 32px; overflow-wrap: break-word; }
+
+  /* Alertes : empiler la vue liste + détail verticalement */
+  .alerte-split { grid-template-columns: 1fr; }
+
+  /* Onglets diagnostic : défilement horizontal */
+  .tabs-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .seg { min-width: max-content; }
+
+  /* Tuiles diagnostic hero : 2 colonnes au lieu de 3 */
+  .diag-hero { grid-template-columns: 1fr 1fr; }
+
+  /* Liens "Voir tout →" : surface de clic agrandie */
+  .more { padding: 8px 4px; display: inline-block; }
+
+  /* Grille fonds : espacement réduit */
+  .fund-scroller { gap: 10px; }
+
+  /* Prompt card */
+  .prompt-card textarea { min-height: 72px; }
 }
