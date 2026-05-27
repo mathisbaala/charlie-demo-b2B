@@ -505,10 +505,11 @@ button { font-family: inherit; }
   margin: 0;
 }
 .h-section {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--ink);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 .eyebrow {
   font-size: 10.5px;
@@ -2597,11 +2598,13 @@ body { font-feature-settings: "ss01", "tnum" 0; }
   font-size: 22px;
   color: var(--ink);
   letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .tmpl-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 14px;
   margin-top: 14px;
 }
