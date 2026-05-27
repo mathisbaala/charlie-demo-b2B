@@ -3052,6 +3052,11 @@ body { font-feature-settings: "ss01", "tnum" 0; }
     padding-top: 16px;
     justify-content: flex-start;
   }
+
+  /* Boutons action Contact : padding compact pour tenir à 3 sur mobile */
+  .contact-quick-actions { gap: 8px; }
+  .contact-action-btn { padding: 10px 8px; gap: 6px; font-size: 12px; }
+  .contact-action-btn .action-ico { width: 24px; height: 24px; }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -3259,6 +3264,7 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 
 .contact-action-btn {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
