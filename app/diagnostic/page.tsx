@@ -586,7 +586,7 @@ function TabContact({ clientId }: { clientId: string }) {
               <span className="lbl-sm">Points à préparer</span>
               {points.map((pt, i) => (
                 <div key={i} className="rdv-point-row">
-                  <span className="rdv-dot" />
+                  <span className="rdv-num">{i + 1}</span>
                   <textarea
                     className="rdv-point-input"
                     value={pt}
