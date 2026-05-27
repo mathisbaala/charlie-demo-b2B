@@ -3009,7 +3009,10 @@ body { font-feature-settings: "ss01", "tnum" 0; }
   .page-narrow-980 { padding: 20px 16px 60px; }
 
   /* Titres hero */
-  .h-hero { font-size: 32px; overflow-wrap: break-word; }
+  .h-hero { font-size: 32px; overflow-wrap: break-word; text-wrap: wrap; }
+
+  /* État vide reporting : réduire le padding latéral */
+  .report-empty { padding: 40px 16px; }
 
   /* Alertes : empiler la vue liste + détail verticalement */
   .alerte-split { grid-template-columns: 1fr; }
