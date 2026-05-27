@@ -3115,6 +3115,8 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 .ptf-row .c-ok   { color: var(--ok-ink); }
 .ptf-row .c-warn { color: var(--warn-ink); }
 
+.col-esg { padding-left: 6px; }
+
 .esg-badge {
   display: inline-block;
   padding: 2px 6px;
