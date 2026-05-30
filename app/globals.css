@@ -3799,3 +3799,43 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 .preview-section-lines { display: flex; flex-direction: column; gap: 4px; }
 .preview-section-lines .preview-line { height: 8px; background: var(--paper-3); border-radius: 4px; width: 100%; }
 .preview-section-lines .preview-line.short { width: 65%; }
+
+/* ─── Print — export document PDF ───────────────────────────── */
+@media print {
+  body > *:not(:has(.doc-print-target)),
+  .shell-sidebar,
+  .shell-topbar,
+  [style*="sticky"] {
+    display: none !important;
+  }
+
+  body,
+  html {
+    background: white !important;
+  }
+
+  /* L'overlay plein écran devient transparent et sans défilement */
+  [style*="position: fixed"] {
+    position: static !important;
+    background: none !important;
+    overflow: visible !important;
+  }
+
+  /* La barre d'action en haut disparaît */
+  [style*="background: #1a1a18"],
+  [style*="background: rgb(26, 26, 24)"] {
+    display: none !important;
+  }
+
+  .doc-print-target {
+    width: 100% !important;
+    max-width: none !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  @page {
+    margin: 0;
+    size: A4;
+  }
+}

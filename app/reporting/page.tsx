@@ -8,6 +8,13 @@ import Sparkline from "@/components/kit/sparkline";
 import Donut from "@/components/kit/donut";
 import { ClientPickerBtn } from "@/components/shell/chat-popup";
 import { ClientBanner } from "./client-banner";
+import { DocViewer } from "./doc-viewer";
+
+const OBLIGATION_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+  obligatoire: { label: "Obligatoire",  bg: "oklch(0.93 0.04 25)", color: "oklch(0.42 0.12 25)" },
+  partiel:     { label: "MIF II minima", bg: "oklch(0.93 0.06 65)", color: "oklch(0.52 0.14 65)" },
+  libre:       { label: "Libre",         bg: "var(--paper)",        color: "var(--muted)" },
+};
 
 function TemplateCard({ tmpl, disabled, onGenerate, onPreview }: {
   tmpl: Template;
@@ -15,6 +22,7 @@ function TemplateCard({ tmpl, disabled, onGenerate, onPreview }: {
   onGenerate?: () => void;
   onPreview?: () => void;
 }) {
+  const ob = OBLIGATION_STYLE[tmpl.obligation] ?? OBLIGATION_STYLE.libre;
   return (
     <div className={`tmpl-card ${disabled ? "disabled" : ""}`}>
       <div className="preview">
@@ -76,10 +84,83 @@ function TemplateCard({ tmpl, disabled, onGenerate, onPreview }: {
             </div>
           ))}
         </>}
+        {tmpl.preview === "adequation" && <>
+          <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>Couche réglementaire</div>
+          {["Profil de risque · 4/7", "Objectifs déclarés", "SRI ≤ profil ✓", "Capacité à subir des pertes"].map((s, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ width: 5, height: 5, borderRadius: 999, flexShrink: 0, background: i === 1 ? "var(--warn)" : "var(--ok)" }} />
+              <span style={{ fontSize: 9.5, color: "var(--ink-2)" }}>{s}</span>
+            </div>
+          ))}
+          <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 6, marginBottom: 3, letterSpacing: "0.05em", textTransform: "uppercase" }}>Couche investissement</div>
+          <div style={{ display: "flex", gap: 4 }}>
+            <div style={{ background: "var(--paper)", padding: "3px 6px", borderRadius: 4 }}>
+              <div style={{ fontSize: 8, color: "var(--muted)" }}>Encours</div>
+              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: "var(--accent-ink)" }}>240 k€</div>
+            </div>
+            <div style={{ background: "var(--paper)", padding: "3px 6px", borderRadius: 4 }}>
+              <div style={{ fontSize: 8, color: "var(--muted)" }}>SRI</div>
+              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 11, color: "var(--ok)" }}>3 / 7</div>
+            </div>
+          </div>
+        </>}
+        {tmpl.preview === "proposition" && <>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Donut size={48} thickness={9} segments={[{value:55,color:"var(--accent)"},{value:25,color:"oklch(0.55 0.12 150)"},{value:20,color:"oklch(0.65 0.04 220)"}]} />
+            <div style={{ flex: 1 }}>
+              {[["Actions","55 %","var(--accent)"],["Obligataire","25 %","oklch(0.55 0.12 150)"],["Monétaire","20 %","oklch(0.65 0.04 220)"]].map(([l,v,c]) => (
+                <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 9.5, color: "var(--ink-2)" }}>
+                    <i style={{ display: "block", width: 6, height: 6, borderRadius: 999, background: c, flexShrink: 0 }} />
+                    {l}
+                  </span>
+                  <span style={{ fontFamily: "DM Mono, monospace", fontSize: 9.5, color: "var(--ink)" }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginTop: 6, display: "flex", gap: 4 }}>
+            <div style={{ background: "var(--accent-soft)", padding: "3px 7px", borderRadius: 4, fontSize: 9, color: "var(--accent-ink)", fontFamily: "DM Mono, monospace" }}>Profil 4/7</div>
+            <div style={{ background: "var(--paper)", padding: "3px 7px", borderRadius: 4, fontSize: 9, color: "var(--muted)" }}>5 fonds sélectionnés</div>
+          </div>
+        </>}
+        {tmpl.preview === "dici" && <>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+            <span style={{ fontSize: 9, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>40 lignes</span>
+            <span style={{ fontSize: 9, color: "var(--warn-ink)", background: "var(--warn-soft, oklch(0.95 0.04 80))", padding: "1px 6px", borderRadius: 99 }}>3 alertes</span>
+          </div>
+          {[["Carmignac Patrimoine","2024","✓"],["Altaroc Odyssey 2023","2023","⚠"],["Primonial SCPI","2025","✓"]].map(([n,v,s]) => (
+            <div key={n} style={{ display: "grid", gridTemplateColumns: "1fr 30px 16px", alignItems: "center", gap: 4, marginBottom: 2 }}>
+              <span style={{ fontSize: 9, color: "var(--ink-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{n}</span>
+              <span style={{ fontSize: 8.5, fontFamily: "DM Mono, monospace", color: "var(--muted)", textAlign: "center" }}>{v}</span>
+              <span style={{ fontSize: 10, textAlign: "center" }}>{s}</span>
+            </div>
+          ))}
+        </>}
+        {tmpl.preview === "mif2" && <>
+          <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>Frais agrégés</div>
+          {[["OGC fonds","1,45 %"],["Frais PE","0,80 %"],["Rétrocessions","0,35 %"]].map(([l,v]) => (
+            <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+              <span style={{ fontSize: 9.5, color: "var(--ink-2)" }}>{l}</span>
+              <span style={{ fontFamily: "DM Mono, monospace", fontSize: 9.5, color: "var(--ink)" }}>{v}</span>
+            </div>
+          ))}
+          <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 4, display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 9.5, fontWeight: 600, color: "var(--ink)" }}>Total</span>
+            <span style={{ fontFamily: "DM Mono, monospace", fontSize: 10, color: "var(--accent-ink)", fontWeight: 600 }}>2,60 %</span>
+          </div>
+        </>}
       </div>
       <div className="body">
-        <span className="eb" style={{ fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--muted)" }}>{tmpl.cat}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+          <span className="eb" style={{ fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--muted)" }}>{tmpl.cat}</span>
+          <span style={{ display: "inline-block", padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", background: ob.bg, color: ob.color, textTransform: "uppercase" }}>{ob.label}</span>
+        </div>
         <div className="name">{tmpl.name}</div>
+        {tmpl.ref && (
+          <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3, fontFamily: "DM Mono, monospace" }}>{tmpl.ref}</div>
+        )}
+        <div style={{ fontSize: 11, color: "var(--ink-2)", lineHeight: 1.55, marginTop: 6, marginBottom: 10 }}>{tmpl.desc}</div>
         <div className="ctas">
           <Btn variant="accent" size="sm" onClick={onGenerate} disabled={disabled}>Générer</Btn>
           <Btn variant="ghost" size="sm" onClick={onPreview} disabled={disabled}>Aperçu</Btn>
@@ -109,10 +190,12 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
   const [ccList, setCcList]         = useState<string[]>([]);
   const [dateFrom, setDateFrom]     = useState("2026-01-01");
   const [dateTo, setDateTo]         = useState("2026-03-31");
+  const [showDoc, setShowDoc]       = useState(false);
   const [sections, setSections]     = useState<string[]>(
     Array.isArray(template.chips.default) ? template.chips.default : [template.chips.default]
   );
 
+  const period = template.chips.multi ? "1 an" : (sections[0] ?? "1 an");
   const theme = THEME_OPTIONS.find(t => t.id === themeId) ?? THEME_OPTIONS[1];
 
   const toggleSection = (opt: string) => {
@@ -125,6 +208,33 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
       `Cher ${client.name}, suite à notre dernier entretien, je vous transmets ce rapport sur la période sélectionnée. Votre portefeuille affiche une performance de +5,4 % sur la période, supérieure de 1,8 point au benchmark équilibré de référence. Les principaux moteurs de performance sont la poche actions internationale et les fonds thématiques ISR.`
     );
   };
+
+  if (showDoc) {
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(15,15,13,0.72)", display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 1, background: "#1a1a18", padding: "10px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", boxSizing: "border-box" }}>
+          <span style={{ color: "white", fontWeight: 600, fontSize: 13 }}>{template.name} · {client.name}</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => window.print()}
+              style={{ background: "var(--accent)", border: "none", color: "white", borderRadius: 8, padding: "6px 14px", fontWeight: 600, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <Ico.download s={12} /> PDF / Imprimer
+            </button>
+            <button
+              onClick={() => setShowDoc(false)}
+              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}
+            >
+              ✕ Fermer
+            </button>
+          </div>
+        </div>
+        <div style={{ width: "100%", maxWidth: 844, background: "#e8e5e0", paddingBottom: 40 }} className="doc-print-target">
+          <DocViewer template={template} client={client} sections={sections} period={period} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="report-side">
@@ -258,46 +368,23 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
         )}
       </div>
 
-      {/* Aperçu document */}
-      <div className="report-preview-doc" style={{ padding: 0, overflow: "hidden" }}>
-        <div className="preview-doc-header" style={{ background: theme.headerBg }}>
-          <div className="preview-doc-brand">charlie</div>
-          <div className="preview-doc-title-block">
-            <div className="preview-doc-title">{template.name}</div>
-            <div className="preview-doc-sub">{client.name} · profil {client.profile}</div>
-          </div>
-        </div>
-        <div style={{ padding: "16px 20px" }}>
-          <div className="doc-stats">
-            <div className="item"><div className="lbl">Encours</div><div className="v">240 k€</div></div>
-            <div className="item">
-              <div className="lbl">Période</div>
-              <div className="v" style={{ fontSize: 12 }}>
-                {dateFrom.split("-").reverse().join("/")} → {dateTo.split("-").reverse().join("/")}
-              </div>
-            </div>
-            <div className="item"><div className="lbl">Score</div><div className="v">72/100</div></div>
-          </div>
-          {commentary.trim() && (
-            <p style={{ fontStyle: "italic", color: "var(--ink-2)", fontSize: "12px", lineHeight: 1.6, margin: "12px 0 0" }}>{commentary}</p>
-          )}
-          {sections.map(s => (
-            <div key={s} className="preview-section-block">
-              <div className="preview-section-name" style={{ color: theme.headerBg }}>{s}</div>
-              <div className="preview-section-lines">
-                <div className="preview-line" />
-                <div className="preview-line short" />
-              </div>
-            </div>
-          ))}
-          <div className="pagenum">1 / {2 + sections.length} · {tone.toLowerCase()}</div>
+      {/* Aperçu document — rendu réel à 52 % */}
+      <button
+        onClick={() => setShowDoc(true)}
+        style={{ width: "100%", background: "var(--accent)", border: "none", borderRadius: 8, padding: "9px 16px", color: "white", fontWeight: 600, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexShrink: 0 }}
+      >
+        Voir le document complet →
+      </button>
+      <div className="report-preview-doc doc-live-preview" style={{ padding: 0, overflow: "hidden", height: 390, minHeight: 390, flexShrink: 0, background: "#f0ede8", borderRadius: 8, position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, transformOrigin: "top left", transform: "scale(0.52)", width: "calc(100% / 0.52)", pointerEvents: "none" }}>
+          <DocViewer template={template} client={client} sections={sections} period={period} />
         </div>
       </div>
 
       <div className="report-side-foot">
         <Btn variant="accent" size="sm" icon={<Ico.refresh s={13} />}>Régénérer</Btn>
         <Btn variant="ghost" size="sm" icon={<Ico.edit s={13} />}>Éditer</Btn>
-        <Btn variant="ghost" size="sm" icon={<Ico.download s={13} />}>PDF</Btn>
+        <Btn variant="ghost" size="sm" icon={<Ico.download s={13} />} onClick={() => setShowDoc(true)}>PDF</Btn>
         <div style={{ flex: 1 }} />
         <Btn variant="primary" size="sm" icon={<Ico.send s={13} />}>Envoyer</Btn>
       </div>
