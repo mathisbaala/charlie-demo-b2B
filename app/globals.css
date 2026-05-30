@@ -2617,7 +2617,7 @@ body { font-feature-settings: "ss01", "tnum" 0; }
 /* Documents tab */
 .doc-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin: 14px 0 22px;
 }

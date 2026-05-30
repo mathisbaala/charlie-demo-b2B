@@ -681,10 +681,11 @@ function TabContact({ clientId }: { clientId: string }) {
 /* ─────────────────────────────────────────────────────────
    Tab Documents
 ───────────────────────────────────────────────────────── */
+const OBLIG_BASE: React.CSSProperties = { alignSelf: "flex-start", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" };
 const OBLIG_STYLE: Record<string, React.CSSProperties> = {
-  obligatoire: { background: "#fcebeb", color: "#a32d2d", border: "1px solid #e8b4b4", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
-  partiel:     { background: "#faeeda", color: "#854f0b", border: "1px solid #f2c07e", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
-  libre:       { background: "#f3ede6", color: "#b5651d", border: "1px solid #ddc9b0", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
+  obligatoire: { ...OBLIG_BASE, background: "#fcebeb", color: "#a32d2d", border: "1px solid #e8b4b4" },
+  partiel:     { ...OBLIG_BASE, background: "#faeeda", color: "#854f0b", border: "1px solid #f2c07e" },
+  libre:       { ...OBLIG_BASE, background: "#f3ede6", color: "#b5651d", border: "1px solid #ddc9b0" },
 };
 
 function TabDocuments({ clientId }: { clientId: string }) {
