@@ -11,6 +11,8 @@ import { ClientPickerBtn } from "@/components/shell/chat-popup";
 import { getPortfolioRows, getFundStatus, parseFeesPct } from "@/lib/data/portfolio";
 import { CLIENT_SIGNALS, type Signal } from "@/lib/data/signals";
 import { CLIENT_CONTACTS, CLIENT_NEXT_MEETING, type ContactType } from "@/lib/data/contacts";
+import { TEMPLATES } from "@/lib/data/templates";
+import { DocViewer, DocBrief } from "@/app/reporting/doc-viewer";
 
 const ALLOC_COLORS: Record<string, string> = {
   Actions: "var(--accent)",
@@ -485,7 +487,9 @@ function TabContact({ clientId }: { clientId: string }) {
   const [emailBody,    setEmailBody]    = useState("");
   const [msgBody,      setMsgBody]      = useState("");
   const [points, setPoints]             = useState<string[]>(CLIENT_NEXT_MEETING[clientId]?.points ?? []);
+  const [briefOpen, setBriefOpen]       = useState(false);
   const pointsRef = useRef<HTMLDivElement>(null);
+  const client = CLIENTS.find(c => c.id === clientId) ?? CLIENTS[0];
 
   useEffect(() => {
     pointsRef.current?.querySelectorAll<HTMLTextAreaElement>("textarea.rdv-point-input").forEach(t => {
@@ -497,6 +501,23 @@ function TabContact({ clientId }: { clientId: string }) {
 
   const entries  = CLIENT_CONTACTS[clientId]     ?? [];
   const next     = CLIENT_NEXT_MEETING[clientId];
+
+  if (briefOpen && next) {
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(15,15,13,0.72)", display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 1, background: "#1a1a18", padding: "10px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", boxSizing: "border-box" }}>
+          <span style={{ color: "white", fontWeight: 600, fontSize: 13 }}>Brief de rendez-vous · {client.name}</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => window.print()} style={{ padding: "6px 14px", background: "var(--accent)", color: "white", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer", fontWeight: 600 }}>PDF / Imprimer</button>
+            <button onClick={() => setBriefOpen(false)} style={{ padding: "6px 14px", background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>✕ Fermer</button>
+          </div>
+        </div>
+        <div style={{ width: "100%", maxWidth: 844, background: "#e8e5e0", paddingBottom: 40 }} className="doc-print-target">
+          <DocBrief client={client} points={points} date={next.date} time={next.time} />
+        </div>
+      </div>
+    );
+  }
 
   const showToast = () => {
     setToastVisible(true);
@@ -621,7 +642,7 @@ function TabContact({ clientId }: { clientId: string }) {
               </button>
             </div>
             <div style={{ marginTop: 14 }}>
-              <Btn variant="accent" size="sm" icon={<Ico.doc s={13} />} onClick={showToast}>Générer brief de RDV</Btn>
+              <Btn variant="accent" size="sm" icon={<Ico.doc s={13} />} onClick={() => setBriefOpen(true)}>Générer brief de RDV</Btn>
             </div>
           </div>
         )}
@@ -660,16 +681,18 @@ function TabContact({ clientId }: { clientId: string }) {
 /* ─────────────────────────────────────────────────────────
    Tab Documents
 ───────────────────────────────────────────────────────── */
-function TabDocuments() {
-  const [filter, setFilter] = useState("all");
+const OBLIG_STYLE: Record<string, React.CSSProperties> = {
+  obligatoire: { background: "#fcebeb", color: "#a32d2d", border: "1px solid #e8b4b4", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
+  partiel:     { background: "#faeeda", color: "#854f0b", border: "1px solid #f2c07e", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
+  libre:       { background: "#f3ede6", color: "#b5651d", border: "1px solid #ddc9b0", borderRadius: 4, padding: "2px 6px", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" },
+};
 
-  const gens = [
-    { glyph: "P", cat: "Investissement", name: "Rapport de performance" },
-    { glyph: "B", cat: "Investissement", name: "Bilan patrimonial" },
-    { glyph: "F", cat: "Investissement", name: "Synthèse fiscale" },
-    { glyph: "R", cat: "Préparation",   name: "Brief de rendez-vous" },
-    { glyph: "D", cat: "Réglementaire", name: "Fiche conseil DDA" },
-  ];
+function TabDocuments({ clientId }: { clientId: string }) {
+  const [filter, setFilter] = useState("all");
+  const [selectedTmpl, setSelectedTmpl] = useState<typeof TEMPLATES[0] | null>(null);
+  const [showDoc, setShowDoc] = useState(false);
+
+  const client = CLIENTS.find(c => c.id === clientId) ?? CLIENTS[0];
 
   const docs = [
     { catKey: "Investissement", swatch: "invest", cat: "Investissement", sub: "Rapport · trimestre 1",    name: "M. Durand — Bilan trimestriel T1 2026",       meta: "14 mai 2026 · 6 pages · 1,8 Mo",           status: "Signé",    statusV: "ok" },
@@ -683,15 +706,37 @@ function TabDocuments() {
   ];
   const filtered = filter === "all" ? docs : docs.filter(d => d.catKey === filter);
 
+  if (showDoc && selectedTmpl) {
+    const sections = selectedTmpl.chips.multi
+      ? (selectedTmpl.chips.default as string[])
+      : [selectedTmpl.chips.default as string];
+    const period = selectedTmpl.chips.multi ? "1 an" : (sections[0] ?? "1 an");
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(15,15,13,0.72)", display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 1, background: "#1a1a18", padding: "10px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", boxSizing: "border-box" }}>
+          <span style={{ color: "white", fontWeight: 600, fontSize: 13 }}>{selectedTmpl.name} · {client.name}</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => window.print()} style={{ padding: "6px 14px", background: "var(--accent)", color: "white", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer", fontWeight: 600 }}>PDF / Imprimer</button>
+            <button onClick={() => setShowDoc(false)} style={{ padding: "6px 14px", background: "transparent", color: "white", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>✕ Fermer</button>
+          </div>
+        </div>
+        <div style={{ width: "100%", maxWidth: 844, background: "#e8e5e0", paddingBottom: 40 }} className="doc-print-target">
+          <DocViewer template={selectedTmpl} client={client} sections={sections} period={period} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="doc-strip">
-        {gens.map(g => (
-          <div key={g.name} className="gen-card">
-            <span className="mono">{g.glyph}</span>
-            <span className="eb">{g.cat}</span>
-            <span className="name">{g.name}</span>
-            <Btn variant="accent" size="sm">Générer</Btn>
+        {TEMPLATES.map(tmpl => (
+          <div key={tmpl.id} className="gen-card">
+            <span style={OBLIG_STYLE[tmpl.obligation]}>{tmpl.obligation}</span>
+            <span className="eb">{tmpl.cat}</span>
+            <span className="name">{tmpl.name}</span>
+            {tmpl.ref && <span style={{ fontSize: 10, color: "var(--ink-3)", lineHeight: 1.3 }}>{tmpl.ref}</span>}
+            <Btn variant="accent" size="sm" onClick={() => { setSelectedTmpl(tmpl); setShowDoc(true); }}>Générer</Btn>
           </div>
         ))}
       </div>
@@ -769,7 +814,7 @@ function DiagnosticPage() {
       {tab === "diagnostic"  && <TabDiagnostic clientId={clientId} />}
       {tab === "optimisation" && <TabOptimisation clientId={clientId} />}
       {tab === "signaux"     && <TabSignaux clientId={clientId} />}
-      {tab === "documents"   && <TabDocuments />}
+      {tab === "documents"   && <TabDocuments clientId={clientId} />}
       {tab === "contact"     && <TabContact clientId={clientId} />}
     </div>
   );
