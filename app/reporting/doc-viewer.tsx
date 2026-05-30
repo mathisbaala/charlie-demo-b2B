@@ -2,6 +2,7 @@
 import { type Template } from "@/lib/data/templates";
 import { type Client } from "@/lib/data/clients";
 import { getPortfolioRows } from "@/lib/data/portfolio";
+import { CLIENT_NEXT_MEETING } from "@/lib/data/contacts";
 
 /* ─── Styles partagés ─────────────────────────────────────────── */
 const C = {
@@ -53,11 +54,12 @@ const S: Record<string, React.CSSProperties> = {
 };
 
 /* ─── Header commun (wrapper complet) ───────────────────────── */
-function DocHeader({ title, client, ref: refLabel, date, children }: {
+function DocHeader({ title, client, ref: refLabel, date, commentary, children }: {
   title: string;
   client: Client;
   ref?: string;
   date?: string;
+  commentary?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -79,6 +81,11 @@ function DocHeader({ title, client, ref: refLabel, date, children }: {
             <span style={S.small}><b>N° dossier :</b> CGP-2026-{client.id.slice(0, 3).toUpperCase()}-087</span>
           </div>
         </div>
+        {commentary && (
+          <div style={{ ...S.decl, margin: "0 0 20px 0" }}>
+            {commentary}
+          </div>
+        )}
         {children}
       </div>
     </>
@@ -86,7 +93,7 @@ function DocHeader({ title, client, ref: refLabel, date, children }: {
 }
 
 /* ─── 1. RAPPORT D'ADÉQUATION ────────────────────────────────── */
-function DocAdequation({ client }: { client: Client }) {
+function DocAdequation({ client, commentary }: { client: Client; commentary?: string }) {
   const rows = getPortfolioRows(client.id);
   const total = rows.reduce((s, r) => s + r.amount, 0);
   const sri = rows.reduce((s, r) => s + r.amount * parseInt(r.fund.srri), 0) / total;
@@ -98,7 +105,7 @@ function DocAdequation({ client }: { client: Client }) {
   void ytdStr;
 
   return (
-    <DocHeader title="Rapport d'adéquation — Suitability Report" client={client} ref="MIF II art. 25(6)">
+    <DocHeader title="Rapport d'adéquation — Suitability Report" client={client} ref="MIF II art. 25(6)" commentary={commentary}>
       {/* KPIs */}
       <div style={S.kpiGrid}>
         <div style={S.kpiBox}><div style={S.kpiVal}>{client.encours}</div><div style={S.kpiLbl}>Encours total</div></div>
@@ -244,7 +251,7 @@ function DocAdequation({ client }: { client: Client }) {
 }
 
 /* ─── 2. RAPPORT DE PERFORMANCE ─────────────────────────────── */
-function DocPerformance({ client, period }: { client: Client; period: string }) {
+function DocPerformance({ client, period, commentary }: { client: Client; period: string; commentary?: string }) {
   const rows = getPortfolioRows(client.id);
   const total = rows.reduce((s, r) => s + r.amount, 0);
   const ytdW = rows.reduce((s, r) => s + r.amount * parseFloat(r.fund.ytd.replace("+", "").replace(" %", "")), 0) / total;
@@ -253,7 +260,7 @@ function DocPerformance({ client, period }: { client: Client; period: string }) 
   const finalEncours = total + gainAbs;
 
   return (
-    <DocHeader title={`Rapport de performance — ${period}`} client={client} ref="MIF II art. 25(6) — Relevé de portefeuille">
+    <DocHeader title={`Rapport de performance — ${period}`} client={client} ref="MIF II art. 25(6) — Relevé de portefeuille" commentary={commentary}>
       <div style={{ ...S.alert, ...S.alertG }}>✓ Alerte −10 % MIF II — Non déclenchée. La valeur du portefeuille n'a pas subi de dépréciation ≥ 10 % depuis le dernier relevé de période.</div>
 
       <div style={S.kpiGrid}>
@@ -349,7 +356,7 @@ function DocPerformance({ client, period }: { client: Client; period: string }) 
 }
 
 /* ─── 3. PROPOSITION D'INVESTISSEMENT ───────────────────────── */
-function DocProposition({ client }: { client: Client }) {
+function DocProposition({ client, commentary }: { client: Client; commentary?: string }) {
   const rows = getPortfolioRows(client.id);
   const total = rows.reduce((s, r) => s + r.amount, 0);
   const isEquil = client.profile === "Équilibré";
@@ -369,7 +376,7 @@ function DocProposition({ client }: { client: Client }) {
   ];
 
   return (
-    <DocHeader title="Proposition d'investissement — Allocation stratégique" client={client} ref="Fondée sur le rapport d'adéquation du 30 mai 2026">
+    <DocHeader title="Proposition d'investissement — Allocation stratégique" client={client} ref="Fondée sur le rapport d'adéquation du 30 mai 2026" commentary={commentary}>
       <div style={{ ...S.alert, ...S.alertA }}>
         Problématique identifiée : Votre allocation présente une surexposition à Carmignac Patrimoine (−3,2 % YTD, retiré de liste prescrite) et un léger dépassement du SRI cible sur la poche actions thématiques. La proposition ci-dessous vise à corriger ces deux points.
       </div>
@@ -702,21 +709,130 @@ function DocMif2({ client, year }: { client: Client; year: string }) {
   );
 }
 
+/* ─── 6. BRIEF PRÉ-RENDEZ-VOUS ──────────────────────────────── */
+export function DocBrief({ client, points, date, time }: {
+  client: Client;
+  points: string[];
+  date: string;
+  time: string;
+}) {
+  const rows = getPortfolioRows(client.id);
+  const total = rows.reduce((s, r) => s + r.amount, 0);
+  const ytdW = rows.reduce((s, r) => s + r.amount * parseFloat(r.fund.ytd.replace("+", "").replace(" %", "")), 0) / total;
+  const ytdStr = (ytdW > 0 ? "+" : "") + ytdW.toFixed(1) + " %";
+  const carPat = rows.find(r => r.fund.id === "car-pat");
+  const isEquil = client.profile === "Équilibré";
+  const profNum = isEquil ? 4 : client.profile === "Dynamique" ? 5 : client.profile === "Prudent" ? 2 : 3;
+
+  return (
+    <DocHeader title="Brief de rendez-vous" client={client} ref="Préparation CGP — Document interne confidentiel" date={`${date} · ${time}`}>
+      <div style={S.kpiGrid}>
+        <div style={S.kpiBox}><div style={S.kpiVal}>{client.encours}</div><div style={S.kpiLbl}>Encours total</div></div>
+        <div style={S.kpiBox}><div style={{ ...S.kpiVal, color: ytdW >= 0 ? C.green : C.red }}>{ytdStr}</div><div style={S.kpiLbl}>Performance YTD</div></div>
+        <div style={S.kpiBox}><div style={S.kpiVal}>{profNum}/7</div><div style={S.kpiLbl}>Profil — {client.profile}</div></div>
+        <div style={S.kpiBox}><div style={S.kpiVal}>{client.horizon}</div><div style={S.kpiLbl}>Horizon de placement</div></div>
+      </div>
+
+      {carPat && (
+        <div style={{ ...S.alert, ...S.alertA }}>
+          ⚠ Point critique : Carmignac Patrimoine ({carPat.pct.toFixed(1)} % · {carPat.amount.toLocaleString("fr-FR")} €) retiré de la liste prescrite le 24 mai 2026. Proposition d'arbitrage vers Charlie Patrimoine 60/40 (SRI 3/7, −0,7 pt de frais) à valider ce rendez-vous.
+        </div>
+      )}
+
+      {/* Ordre du jour */}
+      <div style={S.section}>
+        <div style={S.sectionLabel}>Ordre du jour · {points.length} point{points.length > 1 ? "s" : ""}</div>
+        {points.map((pt, i) => (
+          <div key={i} style={{ display: "flex", gap: 12, padding: "9px 0", borderBottom: `1px solid ${C.border}`, alignItems: "flex-start" }}>
+            <span style={{ width: 22, height: 22, borderRadius: "50%", background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, color: "white" }}>{i + 1}</span>
+            <span style={{ flex: 1, fontSize: 12, color: C.ink, lineHeight: 1.6 }}>{pt}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Portefeuille résumé */}
+      <div style={S.section}>
+        <div style={S.sectionLabel}>État du portefeuille au {date}</div>
+        <table style={S.table}>
+          <thead>
+            <tr>{["Fonds", "Alloc.", "Montant", "SRI", "Perf. YTD", "Statut"].map(h => <th key={h} style={S.th}>{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.map(r => {
+              const isWarn = r.fund.id === "car-pat";
+              const isNeg = r.fund.ytd.startsWith("−") || r.fund.ytd.startsWith("-");
+              return (
+                <tr key={r.fundId} style={isWarn ? { background: "#fdf6ef" } : {}}>
+                  <td style={{ ...S.td, fontWeight: isWarn ? 700 : 600, color: C.ink }}>{r.fund.name}</td>
+                  <td style={{ ...S.td, ...S.mono }}>{r.pct.toFixed(1)} %</td>
+                  <td style={{ ...S.td, ...S.mono }}>{r.amount.toLocaleString("fr-FR")} €</td>
+                  <td style={{ ...S.td, ...S.mono, color: parseInt(r.fund.srri) > profNum ? C.red : C.muted }}>{r.fund.srri}/7</td>
+                  <td style={{ ...S.td, ...S.mono, color: isNeg ? C.red : C.green }}>{r.fund.ytd}</td>
+                  <td style={{ ...S.td, fontSize: 10, color: isWarn ? C.red : C.green, fontWeight: 600 }}>{isWarn ? "⚠ À arbitrer" : "✓ OK"}</td>
+                </tr>
+              );
+            })}
+            <tr style={{ background: C.bg }}>
+              <td style={{ ...S.td, fontWeight: 700, color: C.ink }} colSpan={2}>Total portefeuille</td>
+              <td style={{ ...S.td, ...S.mono, fontWeight: 700 }}>{total.toLocaleString("fr-FR")} €</td>
+              <td colSpan={2} style={{ ...S.td, ...S.mono, color: ytdW >= 0 ? C.green : C.red, fontWeight: 700 }}>{ytdStr} YTD</td>
+              <td style={S.td} />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Documents à apporter */}
+      <div style={S.section}>
+        <div style={S.sectionLabel}>Documents à préparer pour ce rendez-vous</div>
+        {[
+          { doc: "Rapport d'adéquation", note: "À faire signer — mise à jour profil KYC requise", urgence: true },
+          { doc: "Proposition d'investissement", note: "Arbitrage Carmignac → Charlie Patrimoine 60/40", urgence: true },
+          { doc: "DCI Carmignac Patrimoine (version 2026)", note: "Remise obligatoire avant toute souscription", urgence: true },
+          { doc: "Rapport de performance T1 2026", note: "Déjà signé — à commenter oralement", urgence: false },
+        ].map(({ doc, note, urgence }) => (
+          <div key={doc} style={{ display: "flex", gap: 10, padding: "7px 0", borderBottom: `1px solid ${C.border}`, alignItems: "center" }}>
+            <span style={{ fontSize: 11, width: 8, height: 8, borderRadius: "50%", background: urgence ? C.red : C.green, flexShrink: 0, marginTop: 1 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: C.ink }}>{doc}</div>
+              <div style={{ fontSize: 10.5, color: C.ink2 }}>{note}</div>
+            </div>
+            {urgence && <span style={{ fontSize: 9, fontWeight: 700, color: C.red, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>Urgent</span>}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ ...S.footer, gridTemplateColumns: "1fr" }}>
+        <div style={{ ...S.small, lineHeight: 1.65 }}>
+          Document de préparation interne — confidentiel, non transmissible au client. Généré automatiquement par Charlie le {date} avant le rendez-vous de {time}. Camille Vasseur — Charlie Conseil.
+        </div>
+      </div>
+    </DocHeader>
+  );
+}
+
 /* ─── Export principal ───────────────────────────────────────── */
-export function DocViewer({ template, client, sections, period }: {
+export function DocViewer({ template, client, sections, period, extras }: {
   template: Template;
   client: Client;
   sections: string[];
   period: string;
+  extras?: { points?: string[]; commentary?: string };
 }) {
   const year = period.match(/\d{4}/)?.[0] ?? "2025";
   void sections;
+  const com = extras?.commentary || undefined;
   switch (template.id) {
-    case "adequation":  return <DocAdequation client={client} />;
-    case "perf":        return <DocPerformance client={client} period={period} />;
-    case "proposition": return <DocProposition client={client} />;
+    case "adequation":  return <DocAdequation client={client} commentary={com} />;
+    case "perf":        return <DocPerformance client={client} period={period} commentary={com} />;
+    case "proposition": return <DocProposition client={client} commentary={com} />;
     case "dici":        return <DocDici client={client} />;
     case "mif2":        return <DocMif2 client={client} year={year} />;
+    case "brief": {
+      const meeting = CLIENT_NEXT_MEETING[client.id];
+      const pts = (extras?.points ?? meeting?.points ?? []);
+      return <DocBrief client={client} points={pts} date={meeting?.date ?? "Aujourd'hui"} time={meeting?.time ?? "9 h 30"} />;
+    }
     default:            return null;
   }
 }

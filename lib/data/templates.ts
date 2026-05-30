@@ -120,6 +120,20 @@ export const TEMPLATES: Template[] = [
       default: ["Frais de conseil & rétrocessions", "Frais produits (OGC / TER)", "Récapitulatif consolidé"],
     },
   },
+  {
+    id: "brief",
+    cat: "Préparation", catKey: "Préparation",
+    name: "Brief pré-rendez-vous",
+    preview: "brief",
+    obligation: "libre",
+    desc: "Document de préparation interne. Récapitulatif de l'état du portefeuille, agenda personnalisable, alertes prioritaires et checklist des documents à apporter en rendez-vous.",
+    chips: {
+      label: "Sections incluses",
+      options: ["Ordre du jour", "État du portefeuille", "Points d'alerte", "Documents à préparer", "Historique récent"],
+      multi: true,
+      default: ["Ordre du jour", "État du portefeuille", "Points d'alerte", "Documents à préparer"],
+    },
+  },
 ];
 
 export const SENT_REPORTS: SentReport[] = [
@@ -129,4 +143,5 @@ export const SENT_REPORTS: SentReport[] = [
   { name: "Rapport coûts & frais MIF II 2025",      cat: "Réglementaire",  date: "31 janvier 2026",  by: "Camille Vasseur", status: "Signé",     statusV: "ok" },
   { name: "Proposition d'investissement",            cat: "Investissement", date: "3 avril 2026",     by: "Camille Vasseur", status: "Envoyé",    statusV: "accent" },
   { name: "Bilan patrimonial 2025",                 cat: "Investissement", date: "12 décembre 2025", by: "Camille Vasseur", status: "Brouillon", statusV: "outline" },
+  { name: "Brief pré-rendez-vous · 30 mai 2026",    cat: "Préparation",    date: "29 mai 2026",      by: "Camille Vasseur", status: "Interne",   statusV: "outline" },
 ];

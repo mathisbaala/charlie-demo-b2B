@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { TEMPLATES, SENT_REPORTS, type Template } from "@/lib/data/templates";
 import { CLIENTS, type Client } from "@/lib/data/clients";
+import { CLIENT_NEXT_MEETING } from "@/lib/data/contacts";
 import { Ico } from "@/components/kit/icons";
 import { Btn, Pill } from "@/components/kit/primitives";
 import Sparkline from "@/components/kit/sparkline";
@@ -194,9 +195,13 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
   const [sections, setSections]     = useState<string[]>(
     Array.isArray(template.chips.default) ? template.chips.default : [template.chips.default]
   );
+  const [briefPoints, setBriefPoints] = useState<string[]>(
+    template.id === "brief" ? (CLIENT_NEXT_MEETING[client.id]?.points ?? []) : []
+  );
 
   const period = template.chips.multi ? "1 an" : (sections[0] ?? "1 an");
   const theme = THEME_OPTIONS.find(t => t.id === themeId) ?? THEME_OPTIONS[1];
+  const extras = { points: briefPoints, commentary: commentary || undefined };
 
   const toggleSection = (opt: string) => {
     if (!template.chips.multi) { setSections([opt]); return; }
@@ -204,9 +209,15 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
   };
 
   const charlieRedige = () => {
-    setCommentary(
-      `Cher ${client.name}, suite à notre dernier entretien, je vous transmets ce rapport sur la période sélectionnée. Votre portefeuille affiche une performance de +5,4 % sur la période, supérieure de 1,8 point au benchmark équilibré de référence. Les principaux moteurs de performance sont la poche actions internationale et les fonds thématiques ISR.`
-    );
+    if (template.id === "brief") {
+      setCommentary(`Rendez-vous de suivi semestriel avec ${client.name}. Priorité absolue : valider l'arbitrage Carmignac Patrimoine — engagement pris lors du dernier entretien du 14 février. Vérifier la mise à jour du profil KYC avant signature.`);
+    } else if (template.id === "adequation") {
+      setCommentary(`Dans le cadre de notre obligation de conseil, et conformément à l'article 25(6) de MIF II, je vous soumets ce rapport d'adéquation actualisé. Il intègre la mise à jour de votre profil KYC réalisée ce jour et les recommandations d'arbitrage qui en découlent.`);
+    } else if (template.id === "proposition") {
+      setCommentary(`Cher ${client.name}, à la suite de notre analyse approfondie de votre situation patrimoniale, je vous présente cette proposition d'investissement personnalisée. Elle vise à améliorer la qualité et l'efficience de votre portefeuille tout en respectant strictement votre profil de risque et vos objectifs.`);
+    } else {
+      setCommentary(`Cher ${client.name}, suite à notre dernier entretien, je vous transmets ce rapport sur la période sélectionnée. Votre portefeuille affiche une performance de +5,4 % sur la période, supérieure de 1,8 point au benchmark équilibré de référence. Les principaux moteurs de performance sont la poche actions internationale et les fonds thématiques ISR.`);
+    }
   };
 
   if (showDoc) {
@@ -230,7 +241,7 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
           </div>
         </div>
         <div style={{ width: "100%", maxWidth: 844, background: "#e8e5e0", paddingBottom: 40 }} className="doc-print-target">
-          <DocViewer template={template} client={client} sections={sections} period={period} />
+          <DocViewer template={template} client={client} sections={sections} period={period} extras={extras} />
         </div>
       </div>
     );
@@ -244,29 +255,66 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
       </div>
       <h2 style={{ marginTop: 12, marginBottom: 18 }}>{template.name} · {client.name}</h2>
 
-      {/* Période ou sections */}
-      <div className="conf-block">
-        <span className="eyebrow">{template.chips.label}</span>
-        {template.chips.label === "Période" ? (
-          <div className="conf-date-range">
-            <div className="date-field">
-              <label>Du</label>
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="conf-date-input" />
-            </div>
-            <span className="date-sep">→</span>
-            <div className="date-field">
-              <label>Au</label>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="conf-date-input" />
-            </div>
+      {/* Période, sections ou agenda (brief) */}
+      {template.id === "brief" ? (
+        <div className="conf-block">
+          <div className="conf-label-row">
+            <span className="eyebrow">Ordre du jour</span>
+            <button className="charlie-draft-btn" onClick={() => setBriefPoints([
+              "Bilan de performance depuis janvier",
+              "Arbitrage Carmignac Patrimoine → Charlie Patrimoine 60/40",
+              "Rééquilibrage de la poche monétaire",
+              "Point sur l'optimisation fiscale",
+            ])}>✦ Charlie suggère</button>
           </div>
-        ) : (
-          <div className="chips-row" style={{ marginTop: 8 }}>
-            {template.chips.options.map(o => (
-              <button key={o} className={`chip-filter ${sections.includes(o) ? "active" : ""}`} onClick={() => toggleSection(o)}>{o}</button>
+          <div style={{ marginTop: 8 }}>
+            {briefPoints.map((pt, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                <input
+                  className="conf-input conf-input-inline"
+                  value={pt}
+                  onChange={e => { const next = [...briefPoints]; next[i] = e.target.value; setBriefPoints(next); }}
+                  style={{ flex: 1 }}
+                  placeholder={`Point ${i + 1}…`}
+                />
+                <button
+                  style={{ width: 24, height: 24, borderRadius: 4, border: "none", background: "transparent", color: "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                  onClick={() => setBriefPoints(briefPoints.filter((_, j) => j !== i))}
+                >
+                  <Ico.x s={11} />
+                </button>
+              </div>
             ))}
+            <button className="rdv-add-btn" style={{ marginTop: 4 }} onClick={() => setBriefPoints([...briefPoints, ""])}>
+              <Ico.plus s={11} /> Ajouter un point
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="conf-block">
+          <span className="eyebrow">{template.chips.label}</span>
+          {template.chips.label === "Période" ? (
+            <div className="conf-date-range">
+              <div className="date-field">
+                <label>Du</label>
+                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="conf-date-input" />
+              </div>
+              <span className="date-sep">→</span>
+              <div className="date-field">
+                <label>Au</label>
+                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="conf-date-input" />
+              </div>
+            </div>
+          ) : (
+            <div className="chips-row" style={{ marginTop: 8 }}>
+              {template.chips.options.map(o => (
+                <button key={o} className={`chip-filter ${sections.includes(o) ? "active" : ""}`} onClick={() => toggleSection(o)}>{o}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Ton */}
       <div className="conf-block">
@@ -377,7 +425,7 @@ function ReportPreview({ template, client, onClose }: { template: Template; clie
       </button>
       <div className="report-preview-doc doc-live-preview" style={{ padding: 0, overflow: "hidden", height: 390, minHeight: 390, flexShrink: 0, background: "#f0ede8", borderRadius: 8, position: "relative" }}>
         <div style={{ position: "absolute", top: 0, left: 0, transformOrigin: "top left", transform: "scale(0.52)", width: "calc(100% / 0.52)", pointerEvents: "none" }}>
-          <DocViewer template={template} client={client} sections={sections} period={period} />
+          <DocViewer template={template} client={client} sections={sections} period={period} extras={extras} />
         </div>
       </div>
 
@@ -399,7 +447,7 @@ export default function ReportingPage() {
   const client = clientId ? CLIENTS.find(c => c.id === clientId) ?? null : null;
 
   const list = filter === "all" ? TEMPLATES
-    : filter === "mine" ? TEMPLATES.slice(0, 2)
+    : filter === "mine" ? TEMPLATES.filter(t => ["adequation", "perf", "brief"].includes(t.id))
     : TEMPLATES.filter(t => t.catKey === filter);
 
   if (!client) {
@@ -415,7 +463,7 @@ export default function ReportingPage() {
         </div>
         <h2 className="h-section" style={{ marginTop: 28 }}>Modèles de rapport</h2>
         <div className="tmpl-grid">
-          {TEMPLATES.map(t => <TemplateCard key={t.id} tmpl={t} disabled />)}
+          {TEMPLATES.map(t => <TemplateCard key={t.id} tmpl={t} disabled onGenerate={() => {}} onPreview={() => {}} />)}
         </div>
       </div>
     );
@@ -436,6 +484,7 @@ export default function ReportingPage() {
           <button className={`chip-filter ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>Tous</button>
           <button className={`chip-filter ${filter === "Investissement" ? "active" : ""}`} onClick={() => setFilter("Investissement")}>Investissement</button>
           <button className={`chip-filter ${filter === "Réglementaire" ? "active" : ""}`} onClick={() => setFilter("Réglementaire")}>Réglementaire</button>
+          <button className={`chip-filter ${filter === "Préparation" ? "active" : ""}`} onClick={() => setFilter("Préparation")}>Préparation</button>
           <button className={`chip-filter ${filter === "mine" ? "active" : ""}`} onClick={() => setFilter("mine")}>Mes modèles</button>
         </div>
       </div>
