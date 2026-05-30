@@ -4,6 +4,11 @@ import { type Client } from "@/lib/data/clients";
 import { getPortfolioRows } from "@/lib/data/portfolio";
 import { CLIENT_NEXT_MEETING } from "@/lib/data/contacts";
 
+/* ─── Helpers ─────────────────────────────────────────────────── */
+function parsePct(s: string): number {
+  return parseFloat(s.replace("+", "").replace("−", "-").replace(",", ".").replace(" %", ""));
+}
+
 /* ─── Styles partagés ─────────────────────────────────────────── */
 const C = {
   accent: "#b5651d",
@@ -97,7 +102,7 @@ function DocAdequation({ client, commentary }: { client: Client; commentary?: st
   const rows = getPortfolioRows(client.id);
   const total = rows.reduce((s, r) => s + r.amount, 0);
   const sri = rows.reduce((s, r) => s + r.amount * parseInt(r.fund.srri), 0) / total;
-  const ytdNum = rows.reduce((s, r) => s + r.amount * parseFloat(r.fund.ytd.replace("+", "").replace(" %", "")), 0) / total;
+  const ytdNum = rows.reduce((s, r) => s + r.amount * parsePct(r.fund.ytd), 0) / total;
   const ytdStr = (ytdNum > 0 ? "+" : "") + ytdNum.toFixed(1) + " %";
   const isEquil = client.profile === "Équilibré";
   const profNum = isEquil ? 4 : client.profile === "Dynamique" ? 5 : client.profile === "Prudent" ? 2 : 3;
@@ -254,7 +259,7 @@ function DocAdequation({ client, commentary }: { client: Client; commentary?: st
 function DocPerformance({ client, period, commentary }: { client: Client; period: string; commentary?: string }) {
   const rows = getPortfolioRows(client.id);
   const total = rows.reduce((s, r) => s + r.amount, 0);
-  const ytdW = rows.reduce((s, r) => s + r.amount * parseFloat(r.fund.ytd.replace("+", "").replace(" %", "")), 0) / total;
+  const ytdW = rows.reduce((s, r) => s + r.amount * parsePct(r.fund.ytd), 0) / total;
   const ytdStr = (ytdW > 0 ? "+" : "") + ytdW.toFixed(1) + " %";
   const gainAbs = Math.round(total * ytdW / 100);
   const finalEncours = total + gainAbs;
@@ -278,7 +283,7 @@ function DocPerformance({ client, period, commentary }: { client: Client; period
           </thead>
           <tbody>
             {rows.map(r => {
-              const perf = parseFloat(r.fund.ytd.replace("+", "").replace(" %", ""));
+              const perf = parsePct(r.fund.ytd);
               const contrib = (r.pct / 100 * perf).toFixed(2);
               const final = Math.round(r.amount * (1 + perf / 100));
               const isNeg = perf < 0;
@@ -718,7 +723,7 @@ export function DocBrief({ client, points, date, time }: {
 }) {
   const rows = getPortfolioRows(client.id);
   const total = rows.reduce((s, r) => s + r.amount, 0);
-  const ytdW = rows.reduce((s, r) => s + r.amount * parseFloat(r.fund.ytd.replace("+", "").replace(" %", "")), 0) / total;
+  const ytdW = rows.reduce((s, r) => s + r.amount * parsePct(r.fund.ytd), 0) / total;
   const ytdStr = (ytdW > 0 ? "+" : "") + ytdW.toFixed(1) + " %";
   const carPat = rows.find(r => r.fund.id === "car-pat");
   const isEquil = client.profile === "Équilibré";
